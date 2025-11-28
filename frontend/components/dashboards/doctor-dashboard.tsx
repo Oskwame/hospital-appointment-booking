@@ -18,9 +18,9 @@ export function DoctorDashboard() {
         <main className="flex-1 overflow-auto bg-slate-50">
           <div className="p-6 max-w-7xl mx-auto space-y-6">
             {/* Page Title */}
-            <div className="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-2xl p-6 text-white shadow-lg">
+            <div className=" rounded-2xl p-6  shadow-lg">
               <h2 className="text-3xl font-bold">Welcome Back, Dr. Davis! 👋</h2>
-              <p className="mt-2 text-blue-100">Here's your schedule and patient information for today.</p>
+              <p className="mt-2 text-gray-500">Here's your schedule and patient information for today.</p>
             </div>
 
             {/* Main Grid */}

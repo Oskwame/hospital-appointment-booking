@@ -4,15 +4,7 @@ import { Clock, CheckCircle, AlertCircle, Calendar, User } from "lucide-react"
 
 export function TodayAppointments() {
   const appointments = [
-    {
-      id: 1,
-      patient: "John Smith",
-      reason: "Regular Checkup",
-      time: "10:00 AM",
-      status: "Pending",
-      statusIcon: AlertCircle,
-      statusColor: "bg-amber-100 text-amber-700 border-amber-200",
-    },
+
     {
       id: 2,
       patient: "Emma Wilson",
@@ -66,7 +58,7 @@ export function TodayAppointments() {
             >
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3 flex-1">
-                  <div className="p-2 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg">
+                  <div className="p-2 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-full">
                     <User className="h-5 w-5 text-white" />
                   </div>
                   <div className="flex-1">
@@ -86,7 +78,7 @@ export function TodayAppointments() {
                     <StatusIcon className="h-3.5 w-3.5" />
                     {apt.status}
                   </span>
-                  <button className="px-4 py-2 rounded-lg bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-sm font-medium hover:shadow-lg hover:scale-105 transition-all duration-200">
+                  <button className="px-4 py-2 rounded-[8px] bg-blue-500  text-white text-sm font-medium hover:shadow-lg hover:scale-105 transition-all duration-200">
                     View
                   </button>
                 </div>
