@@ -1,0 +1,93 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Blog {
+  id        Int      @id @default(autoincrement())
+  title     String
+  content   String
+  category  String
+  author    String
+  excerpt   String?
+  status    String   @default("draft")
+  createdAt DateTime @default(now()) @map("created_at")
+  publishedAt DateTime? @map("published_at")
+  imageUrl  String?  @map("image_url")
+
+  @@map("blogs")
+}
+
+model Service {
+  id           Int           @id @default(autoincrement())
+  name         String
+  description  String?
+  icon         String?
+  availableDates DateTime[] @default([])
+  timeSlots    String[]    @default([])
+  createdAt    DateTime      @default(now()) @map("created_at")
+  appointments Appointment[]
+
+  @@map("services")
+}
+
+model AvailableDate {
+  id              Int      @id @default(autoincrement())
+  appointmentDate DateTime @map("appointment_date")
+  isAvailable     Boolean  @default(true) @map("is_available")
+
+  @@map("available_dates")
+}
+
+model Appointment {
+  id              Int      @id @default(autoincrement())
+  name            String
+  email           String
+  phone           String
+  description     String?
+  appointmentDate DateTime @map("appointment_date")
+  status          String   @default("booked")
+  serviceId       Int      @map("service_id")
+  createdAt       DateTime @default(now()) @map("created_at")
+  service         Service  @relation(fields: [serviceId], references: [id])
+
+  @@map("appointment")
+}
+
+model User {
+  id        Int       @id @default(autoincrement())
+  email     String    @unique
+  password  String
+  role      AdminRole @default(ADMIN)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
+enum AdminRole {
+  ADMIN
+  SUPERADMIN
+  DOCTOR
+}
+
+model Doctor {
+  id           Int      @id @default(autoincrement())
+  name         String
+  specialization String
+  email        String
+  phone        String
+  service      String
+  status       String   @default("available")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  @@map("doctors")
+}
