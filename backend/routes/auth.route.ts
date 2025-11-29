@@ -213,6 +213,84 @@ router.put('/password', auth, async (req, res) => {
   }
 })
 
+// PATCH /api/auth/users/:id  (SUPERADMIN only)
+router.patch('/users/:id', auth, async (req, res) => {
+  try {
+    const role = String((req as any).userRole || '').toUpperCase()
+    if (role !== 'SUPERADMIN') {
+      return res.status(403).json({ message: 'Forbidden' })
+    }
+
+    const userId = parseInt(req.params.id)
+    if (isNaN(userId)) {
+      return res.status(400).json({ message: 'Invalid user ID' })
+    }
+
+    const { email, password, role: newRole } = req.body as { email?: string; password?: string; role?: string }
+
+    // Validate role if provided
+    if (newRole) {
+      const targetRole = String(newRole).toUpperCase()
+      if (!['ADMIN', 'DOCTOR'].includes(targetRole)) {
+        return res.status(400).json({ message: 'Role must be ADMIN or DOCTOR' })
+      }
+    }
+
+    // Check if user exists
+    const user = await prisma.user.findUnique({ where: { id: userId } })
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' })
+    }
+
+    // Build update data
+    const updateData: any = {}
+    if (email) {
+      // Check if email is already taken by another user
+      const emailExists = await prisma.user.findFirst({
+        where: { email, id: { not: userId } }
+      })
+      if (emailExists) {
+        return res.status(409).json({ message: 'Email already in use' })
+      }
+      updateData.email = email
+    }
+    if (newRole) {
+      updateData.role = String(newRole).toUpperCase() as any
+    }
+    if (password) {
+      if (password.length < 8) {
+        return res.status(400).json({ message: 'Password must be at least 8 characters' })
+      }
+      updateData.password = await bcrypt.hash(password, 10)
+    }
+
+    // Update the user
+    const updated = await prisma.user.update({
+      where: { id: userId },
+      data: updateData,
+      select: {
+        id: true,
+        email: true,
+        role: true,
+        createdAt: true,
+      }
+    })
+
+    // If email changed and user is a doctor, update doctor record
+    if (email && user.role === 'DOCTOR') {
+      await prisma.doctor.updateMany({
+        where: { email: user.email },
+        data: { email }
+      })
+    }
+
+    return res.json(updated)
+  } catch (err) {
+    console.error('Update user error:', err)
+    return res.status(500).json({ message: 'Server error' })
+  }
+})
+
 // DELETE /api/auth/users/:id  (SUPERADMIN only)
 router.delete('/users/:id', auth, async (req, res) => {
   try {
