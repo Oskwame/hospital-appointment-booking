@@ -124,7 +124,7 @@ export function TodayAppointments() {
           </div>
           <h3 className="text-xl font-bold text-slate-800">Today's Appointments</h3>
         </div>
-        <span className="px-3 py-1 flex flex-col-1 items-center justify-center bg-blue-50 text-blue-700 rounded-full text-sm font-semibold">
+        <span className="px-2 py-1 flex flex-col-1 items-center justify-center bg-blue-50 text-blue-700 rounded-full text-sm font-semibold">
           {appointments.length} Total
         </span>
       </div>
@@ -159,7 +159,7 @@ export function TodayAppointments() {
 
                   <div className="flex items-center md:flex-row flex-col gap-3">
                     <span
-                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border ${getStatusColor(apt.status)}`}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-[8px] text-xs font-semibold border ${getStatusColor(apt.status)}`}
                     >
                       <StatusIcon className="h-3.5 w-3.5" />
                       {apt.status}

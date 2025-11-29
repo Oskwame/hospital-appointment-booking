@@ -4,7 +4,6 @@ import { useState, useEffect } from "react"
 import { Sidebar } from "../layout/sidebar"
 import { TopBar } from "@/components/layout/topbar"
 import { TodayAppointments } from "@/components/doctor/today-appointment"
-import { DoctorProfile } from "../doctor/doctor-profile"
 import { ScheduleTimeline } from "@/components/doctor/schedule-timeline"
 
 export function DoctorDashboard() {
@@ -42,18 +41,10 @@ export function DoctorDashboard() {
               <p className="mt-2 text-gray-500">Here's your schedule and patient information for today.</p>
             </div>
 
-            {/* Main Grid */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              {/* Main Content */}
-              <div className="lg:col-span-2 space-y-6">
-                <TodayAppointments />
-                <ScheduleTimeline />
-              </div>
-
-              {/* Right Sidebar */}
-              <div className="space-y-6">
-                <DoctorProfile />
-              </div>
+            {/* Main Content */}
+            <div className="space-y-6">
+              <TodayAppointments />
+              <ScheduleTimeline />
             </div>
           </div>
         </main>
