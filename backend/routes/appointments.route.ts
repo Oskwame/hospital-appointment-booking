@@ -114,4 +114,71 @@ router.post('/', async (req, res) => {
   }
 })
 
+// PATCH /api/appointments/:id - Update appointment status (DOCTOR only)
+router.patch('/:id', auth, async (req, res) => {
+  try {
+    const userId = (req as any).userId as number
+    if (!userId) return res.status(401).json({ message: 'Unauthorized' })
+
+    const appointmentId = parseInt(req.params.id)
+    if (isNaN(appointmentId)) {
+      return res.status(400).json({ message: 'Invalid appointment ID' })
+    }
+
+    const { status } = req.body as { status?: string }
+    if (!status) {
+      return res.status(400).json({ message: 'Status is required' })
+    }
+
+    // Validate status
+    const validStatuses = ['pending', 'confirmed', 'in progress', 'completed', 'cancelled']
+    if (!validStatuses.includes(status.toLowerCase())) {
+      return res.status(400).json({ message: 'Invalid status value' })
+    }
+
+    // Get user and verify they're a doctor
+    const user = await prisma.user.findUnique({ where: { id: userId } })
+    if (!user) return res.status(404).json({ message: 'User not found' })
+
+    const doctor = await prisma.doctor.findFirst({ where: { email: user.email } })
+    if (!doctor) return res.status(403).json({ message: 'Only doctors can update appointments' })
+
+    // Get appointment and verify it belongs to this doctor
+    const appointment = await prisma.appointment.findUnique({
+      where: { id: appointmentId }
+    })
+
+    if (!appointment) {
+      return res.status(404).json({ message: 'Appointment not found' })
+    }
+
+    if (appointment.doctorId !== doctor.id) {
+      return res.status(403).json({ message: 'You can only update your own appointments' })
+    }
+
+    // Update the appointment
+    const updated = await prisma.appointment.update({
+      where: { id: appointmentId },
+      data: { status },
+    })
+
+    res.json({
+      id: updated.id,
+      name: updated.name,
+      email: updated.email,
+      phone: updated.phone,
+      description: updated.description ?? '',
+      appointment_date: updated.appointmentDate.toISOString(),
+      status: updated.status,
+      service_id: updated.serviceId,
+      doctor_id: updated.doctorId,
+      created_at: updated.createdAt,
+    })
+  } catch (err) {
+    console.error('Update appointment error:', err)
+    res.status(500).json({ message: 'Server error' })
+  }
+})
+
 export default router
+

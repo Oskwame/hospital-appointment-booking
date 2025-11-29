@@ -1,7 +1,6 @@
-"use client"
-
 import { useEffect, useState } from "react"
 import { Clock, CheckCircle, AlertCircle, Calendar, User } from "lucide-react"
+import { AppointmentDetailDialog } from "./appointment-detail-dialog"
 
 interface Appointment {
   id: number
@@ -19,6 +18,7 @@ interface Appointment {
 export function TodayAppointments() {
   const [appointments, setAppointments] = useState<Appointment[]>([])
   const [loading, setLoading] = useState(true)
+  const [selectedAppt, setSelectedAppt] = useState<Appointment | null>(null)
 
   useEffect(() => {
     const fetchAppointments = async () => {
@@ -49,6 +49,36 @@ export function TodayAppointments() {
     }
     fetchAppointments()
   }, [])
+
+  const refreshAppointments = () => {
+    setLoading(true)
+    const fetchAppointments = async () => {
+      try {
+        const base = (process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000") + "/api"
+        const res = await fetch(`${base}/appointments/me`, {
+          credentials: "include",
+        })
+        if (res.ok) {
+          const data = await res.json()
+          const today = new Date()
+          today.setHours(0, 0, 0, 0)
+          const tomorrow = new Date(today)
+          tomorrow.setDate(tomorrow.getDate() + 1)
+
+          const todayAppts = data.filter((apt: Appointment) => {
+            const aptDate = new Date(apt.appointment_date)
+            return aptDate >= today && aptDate < tomorrow
+          })
+          setAppointments(todayAppts)
+        }
+      } catch (e) {
+        console.error("Failed to fetch appointments", e)
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchAppointments()
+  }
 
   const getStatusIcon = (status: string) => {
     switch (status.toLowerCase()) {
@@ -94,7 +124,7 @@ export function TodayAppointments() {
           </div>
           <h3 className="text-xl font-bold text-slate-800">Today's Appointments</h3>
         </div>
-        <span className="px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-sm font-semibold">
+        <span className="px-3 py-1 flex flex-col-1 items-center justify-center bg-blue-50 text-blue-700 rounded-full text-sm font-semibold">
           {appointments.length} Total
         </span>
       </div>
@@ -127,14 +157,17 @@ export function TodayAppointments() {
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center md:flex-row flex-col gap-3">
                     <span
                       className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border ${getStatusColor(apt.status)}`}
                     >
                       <StatusIcon className="h-3.5 w-3.5" />
                       {apt.status}
                     </span>
-                    <button className="px-4 py-2 rounded-[8px] bg-blue-500 text-white text-sm font-medium hover:shadow-lg hover:scale-105 transition-all duration-200">
+                    <button
+                      onClick={() => setSelectedAppt(apt)}
+                      className="px-4 py-2 rounded-[8px] bg-blue-400 text-white text-sm font-medium hover:shadow-lg hover:scale-105 transition-all duration-200"
+                    >
                       View
                     </button>
                   </div>
@@ -144,6 +177,14 @@ export function TodayAppointments() {
           })
         )}
       </div>
+
+      {/* Appointment Detail Dialog */}
+      <AppointmentDetailDialog
+        open={selectedAppt !== null}
+        onOpenChange={(open) => !open && setSelectedAppt(null)}
+        appointment={selectedAppt}
+        onStatusUpdated={refreshAppointments}
+      />
     </div>
   )
 }
