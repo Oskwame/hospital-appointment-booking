@@ -8,6 +8,9 @@ import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Plus, Trash2, Edit, Eye } from "lucide-react"
 import { AddUserForm } from "@/components/superadmin/adduser-form"
+import { ConfirmationDialog } from "@/components/ui/confirmation-dialog"
+import { ViewUserDialog } from "@/components/superadmin/view-user-dialog"
+import { EditUserForm } from "@/components/superadmin/edit-user-form"
 
 interface User {
   id: number
@@ -23,6 +26,12 @@ export default function UsersPage() {
   const [users, setUsers] = useState<User[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+
+  // Modal states
+  const [viewUser, setViewUser] = useState<User | null>(null)
+  const [editUser, setEditUser] = useState<User | null>(null)
+  const [deleteUser, setDeleteUser] = useState<User | null>(null)
+  const [deleting, setDeleting] = useState(false)
 
   // Fetch users from API
   useEffect(() => {
@@ -52,14 +61,13 @@ export default function UsersPage() {
     }
   }
 
-  const handleDelete = async (userId: number, userEmail: string) => {
-    if (!confirm(`Delete user ${userEmail}?`)) {
-      return
-    }
+  const handleDelete = async () => {
+    if (!deleteUser) return
 
     try {
+      setDeleting(true)
       const base = (process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000") + "/api"
-      const res = await fetch(`${base}/auth/users/${userId}`, {
+      const res = await fetch(`${base}/auth/users/${deleteUser.id}`, {
         method: "DELETE",
         credentials: "include",
       })
@@ -70,10 +78,13 @@ export default function UsersPage() {
       }
 
       // Refresh the list
-      fetchUsers()
+      await fetchUsers()
+      setDeleteUser(null)
     } catch (err: any) {
       console.error('Error deleting user:', err)
-      alert(err.message || 'Failed to delete user')
+      setError(err.message || 'Failed to delete user')
+    } finally {
+      setDeleting(false)
     }
   }
 
@@ -107,17 +118,18 @@ export default function UsersPage() {
         <TopBar onMenuClick={() => setSidebarOpen(!sidebarOpen)} />
         <main className="flex-1 overflow-auto">
           <div className="p-6 max-w-7xl mx-auto space-y-6">
-            <div className="flex justify-between items-center space-y-2">
+            <div className="flex flex-wrap justify-between items-center gap-4">
               <div>
-                <h2 className="text-3xl font-bold text-foreground">User Management</h2>
+                <h2 className="text-2xl md:text-3xl font-bold text-foreground">User Management</h2>
                 <p className="text-muted-foreground mt-1">Manage all hospital staff and system users.</p>
               </div>
               <button
                 onClick={() => setShowForm(!showForm)}
-                className="gap-2 shadow-md bg-blue-100 h-11 border-gray-400 rounded-xl px-4 m-3 flex items-center"
+                className="gap-2 shadow-md bg-blue-100 h-11 border-gray-400 rounded-xl px-4 flex items-center hover:bg-blue-200 transition-colors"
               >
                 <Plus className="rounded-xl h-5 bg-blue-500 text-white" />
-                Add User
+                <span className="hidden sm:inline">Add User</span>
+                <span className="sm:hidden">Add</span>
               </button>
             </div>
 
@@ -154,85 +166,109 @@ export default function UsersPage() {
 
             {/* Desktop Table */}
             {!loading && !error && (
-              <div className="overflow-x-auto">
-                <Card className="p-6 bg-white rounded-xl shadow-md border border-slate-200">
-                  <table className="w-full border-collapse text-sm">
-                    <thead className="bg-slate-50 border-b border-slate-200">
-                      <tr>
-                        <th className="py-3 px-4 text-left font-semibold text-slate-600">Name</th>
-                        <th className="py-3 px-4 text-left font-semibold text-slate-600">Email</th>
-                        <th className="py-3 px-4 text-left font-semibold text-slate-600">Role</th>
-                        <th className="py-3 px-4 text-left font-semibold text-slate-600">Status</th>
-                        <th className="py-3 px-4 text-left font-semibold text-slate-600">Actions</th>
-                      </tr>
-                    </thead>
-
-                    <tbody className="hidden sm:table-row-group divide-y divide-slate-100">
-                      {users.map((u) => (
-                        <tr key={u.id} className="hover:bg-slate-50 transition-colors">
-                          <td className="py-4 px-4 text-slate-700">{getUserName(u.email)}</td>
-                          <td className="py-4 px-4 text-slate-700">{u.email}</td>
-                          <td className="py-4 px-4">
-                            <Badge className="px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-700 capitalize">
-                              {u.role.toLowerCase()}
-                            </Badge>
-                          </td>
-                          <td className="py-4 px-4">
-                            <Badge className="px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700">
-                              Active
-                            </Badge>
-                          </td>
-                          <td className="py-4 px-4 flex items-center gap-3">
-                            <button className="p-2 rounded-md bg-blue-50 text-blue-600 hover:bg-blue-100">
-                              <Eye className="h-4 w-4" />
-                            </button>
-                            <button className="p-2 rounded-md bg-amber-50 text-amber-600 hover:bg-amber-100">
-                              <Edit className="h-4 w-4" />
-                            </button>
-                            <button
-                              onClick={() => handleDelete(u.id, u.email)}
-                              className="p-2 rounded-md bg-red-50 text-red-600 hover:bg-red-100"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </button>
-                          </td>
+              <div className="hidden md:block">
+                <div className="overflow-x-auto">
+                  <Card className="p-6 bg-white rounded-xl shadow-md border border-slate-200">
+                    <table className="w-full border-collapse text-sm min-w-[600px]">
+                      <thead className="bg-slate-50 border-b border-slate-200">
+                        <tr>
+                          <th className="py-3 px-4 text-left font-semibold text-slate-600 whitespace-nowrap">Name</th>
+                          <th className="py-3 px-4 text-left font-semibold text-slate-600 whitespace-nowrap">Email</th>
+                          <th className="py-3 px-4 text-left font-semibold text-slate-600 whitespace-nowrap">Role</th>
+                          <th className="py-3 px-4 text-left font-semibold text-slate-600 whitespace-nowrap">Status</th>
+                          <th className="py-3 px-4 text-left font-semibold text-slate-600 whitespace-nowrap">Actions</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </Card>
+                      </thead>
+
+                      <tbody className="divide-y divide-slate-100">
+                        {users.map((u) => (
+                          <tr key={u.id} className="hover:bg-slate-50 transition-colors">
+                            <td className="py-4 px-4 text-slate-700 whitespace-nowrap">{getUserName(u.email)}</td>
+                            <td className="py-4 px-4 text-slate-700">{u.email}</td>
+                            <td className="py-4 px-4">
+                              <Badge className="px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-700 capitalize whitespace-nowrap">
+                                {u.role.toLowerCase()}
+                              </Badge>
+                            </td>
+                            <td className="py-4 px-4">
+                              <Badge className="px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700 whitespace-nowrap">
+                                Active
+                              </Badge>
+                            </td>
+                            <td className="py-4 px-4">
+                              <div className="flex items-center gap-2">
+                                <button
+                                  onClick={() => setViewUser(u)}
+                                  title="View user details"
+                                  className="p-2 rounded-md bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors shadow-sm hover:shadow"
+                                >
+                                  <Eye className="h-4 w-4" />
+                                </button>
+                                <button
+                                  onClick={() => setEditUser(u)}
+                                  title="Edit user"
+                                  className="p-2 rounded-md bg-amber-50 text-amber-600 hover:bg-amber-100 transition-colors shadow-sm hover:shadow"
+                                >
+                                  <Edit className="h-4 w-4" />
+                                </button>
+                                <button
+                                  onClick={() => setDeleteUser(u)}
+                                  title="Delete user"
+                                  className="p-2 rounded-md bg-red-50 text-red-600 hover:bg-red-100 transition-colors shadow-sm hover:shadow"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </Card>
+                </div>
               </div>
             )}
 
             {/* Mobile Cards */}
             {!loading && !error && (
-              <div className="sm:hidden space-y-4 mt-4">
+              <div className="md:hidden space-y-4 mt-4">
                 {users.map((u) => (
                   <div key={u.id} className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
-                    <div className="flex justify-between mb-3">
-                      <h4 className="font-semibold text-slate-700">{getUserName(u.email)}</h4>
+                    <div className="flex justify-between items-start mb-3">
+                      <div>
+                        <h4 className="font-semibold text-slate-700">{getUserName(u.email)}</h4>
+                        <p className="text-sm text-slate-500 mt-1">{u.email}</p>
+                      </div>
                       <Badge className="px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700">
                         Active
                       </Badge>
                     </div>
-                    <p className="text-sm text-slate-500">
-                      <span className="font-medium text-slate-600">Email:</span> {u.email}
-                    </p>
-                    <p className="text-sm text-slate-500">
-                      <span className="font-medium text-slate-600">Role:</span> {u.role.toLowerCase()}
-                    </p>
-                    <div className="flex gap-3 mt-4">
-                      <button className="p-2 rounded-md bg-blue-50 text-blue-600 hover:bg-blue-100">
+                    <div className="mb-3">
+                      <Badge className="px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-700 capitalize">
+                        {u.role.toLowerCase()}
+                      </Badge>
+                    </div>
+                    <div className="flex gap-2 pt-3 border-t border-slate-100">
+                      <button
+                        onClick={() => setViewUser(u)}
+                        className="flex-1 p-2 rounded-md bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors flex items-center justify-center gap-2 shadow-sm hover:shadow"
+                      >
                         <Eye className="h-4 w-4" />
-                      </button>
-                      <button className="p-2 rounded-md bg-amber-50 text-amber-600 hover:bg-amber-100">
-                        <Edit className="h-4 w-4" />
+                        <span className="text-sm">View</span>
                       </button>
                       <button
-                        onClick={() => handleDelete(u.id, u.email)}
-                        className="p-2 rounded-md bg-red-50 text-red-600 hover:bg-red-100"
+                        onClick={() => setEditUser(u)}
+                        className="flex-1 p-2 rounded-md bg-amber-50 text-amber-600 hover:bg-amber-100 transition-colors flex items-center justify-center gap-2 shadow-sm hover:shadow"
+                      >
+                        <Edit className="h-4 w-4" />
+                        <span className="text-sm">Edit</span>
+                      </button>
+                      <button
+                        onClick={() => setDeleteUser(u)}
+                        className="flex-1 p-2 rounded-md bg-red-50 text-red-600 hover:bg-red-100 transition-colors flex items-center justify-center gap-2 shadow-sm hover:shadow"
                       >
                         <Trash2 className="h-4 w-4" />
+                        <span className="text-sm">Delete</span>
                       </button>
                     </div>
                   </div>
@@ -240,6 +276,34 @@ export default function UsersPage() {
               </div>
             )}
           </div>
+
+          {/* Modals */}
+          <ConfirmationDialog
+            open={deleteUser !== null}
+            onOpenChange={(open) => !open && setDeleteUser(null)}
+            title="Delete User"
+            message={`Are you sure you want to delete ${deleteUser?.email}? This action cannot be undone.`}
+            confirmText="Delete User"
+            cancelText="Cancel"
+            onConfirm={handleDelete}
+            variant="danger"
+            loading={deleting}
+          />
+
+          <ViewUserDialog
+            open={viewUser !== null}
+            onOpenChange={(open) => !open && setViewUser(null)}
+            user={viewUser}
+          />
+
+          <EditUserForm
+            open={editUser !== null}
+            onOpenChange={(open) => !open && setEditUser(null)}
+            user={editUser}
+            onUpdated={() => {
+              fetchUsers()
+            }}
+          />
         </main>
       </div>
     </div>
