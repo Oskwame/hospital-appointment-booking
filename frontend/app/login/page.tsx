@@ -107,7 +107,7 @@ export default function Login() {
             <button
               type="submit"
               disabled={loading}
-              className="btn-primary w-full"
+              className="btn-primary w-full px-3  rounded-md shadow-md"
             >
               {loading ? "Loading..." : "Login"}
             </button>

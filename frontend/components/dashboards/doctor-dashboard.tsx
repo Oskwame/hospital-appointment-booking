@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Sidebar } from "../layout/sidebar"
 import { TopBar } from "@/components/layout/topbar"
 import { TodayAppointments } from "@/components/doctor/today-appointment"
@@ -9,6 +9,25 @@ import { ScheduleTimeline } from "@/components/doctor/schedule-timeline"
 
 export function DoctorDashboard() {
   const [sidebarOpen, setSidebarOpen] = useState(true)
+  const [doctorName, setDoctorName] = useState("Doctor")
+
+  useEffect(() => {
+    const fetchDoctor = async () => {
+      try {
+        const base = (process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000") + "/api"
+        const res = await fetch(`${base}/doctors/me`, {
+          credentials: "include",
+        })
+        if (res.ok) {
+          const data = await res.json()
+          setDoctorName(data.name)
+        }
+      } catch (e) {
+        console.error("Failed to fetch doctor", e)
+      }
+    }
+    fetchDoctor()
+  }, [])
 
   return (
     <div className="flex h-screen overflow-hidden bg-background">
@@ -19,7 +38,7 @@ export function DoctorDashboard() {
           <div className="p-6 max-w-7xl mx-auto space-y-6">
             {/* Page Title */}
             <div className=" rounded-2xl p-6  shadow-lg">
-              <h2 className="text-3xl font-bold">Welcome Back, Dr. Davis! 👋</h2>
+              <h2 className="text-3xl font-bold">Welcome Back, {doctorName}! </h2>
               <p className="mt-2 text-gray-500">Here's your schedule and patient information for today.</p>
             </div>
 

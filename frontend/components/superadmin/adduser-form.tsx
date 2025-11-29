@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input"
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select"
 import { Button } from "@/components/ui/button"
 import { X } from "lucide-react"
+import { FaEye, FaEyeSlash } from "react-icons/fa"
 
 type RoleOpt = "admin" | "doctor"
 
@@ -22,6 +23,7 @@ export function AddUserForm({ open, onOpenChange, onCreated }: AddUserFormProps)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [otpSent, setOtpSent] = useState(false)
+  const [showPassword, setShowPassword] = useState(false);
   const [otp, setOtp] = useState("")
 
   const canSave = Boolean(email && password && role && otp && otp.length === 6)
@@ -118,7 +120,7 @@ export function AddUserForm({ open, onOpenChange, onCreated }: AddUserFormProps)
               {otpSent && (
                 <Input
                   value={otp}
-                  onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0,6))}
+                  onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
                   placeholder="Enter 6-digit OTP"
                   className="w-40"
                 />
@@ -128,13 +130,22 @@ export function AddUserForm({ open, onOpenChange, onCreated }: AddUserFormProps)
 
           <div>
             <label className="block text-sm font-medium text-gray-600 mb-1">Password</label>
-            <Input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="At least 8 characters"
-              className="w-full rounded-lg border border-gray-300 focus:border-blue-500 focus:ring focus:ring-blue-200 transition"
-            />
+            <div className="relative">
+              <Input
+                type={showPassword ? "text" : "password"}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="At least 8 characters"
+                className="w-full rounded-lg border border-gray-300 focus:border-blue-500 focus:ring focus:ring-blue-200 transition pr-10"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-600 hover:text-slate-800 focus:outline-none rounded"
+              >
+                {showPassword ? <FaEyeSlash /> : <FaEye />}
+              </button>
+            </div>
           </div>
 
           <div>

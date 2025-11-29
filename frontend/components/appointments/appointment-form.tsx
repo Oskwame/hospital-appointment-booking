@@ -128,7 +128,7 @@ export function AppointmentForm({ appointment, onClose, onCreated }: Appointment
             <SelectTrigger className="w-full rounded-lg border border-gray-300 focus:border-blue-500 focus:ring focus:ring-blue-200 transition">
               <SelectValue placeholder="Select a service" />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className=" bg-white">
               {services.map((s) => (
                 <SelectItem key={s.id} value={String(s.id)}>{s.name}</SelectItem>
               ))}
@@ -153,7 +153,7 @@ export function AppointmentForm({ appointment, onClose, onCreated }: Appointment
             <SelectTrigger className="w-full rounded-lg border border-gray-300 focus:border-blue-500 focus:ring focus:ring-blue-200 transition">
               <SelectValue placeholder={selectedService ? "Select a date" : "Select a service first"} />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className=" bg-white">
               {(selectedService?.availableDates || []).map((d) => (
                 <SelectItem key={d} value={d.slice(0, 10)}>{d.slice(0, 10)}</SelectItem>
               ))}
@@ -166,7 +166,7 @@ export function AppointmentForm({ appointment, onClose, onCreated }: Appointment
             <SelectTrigger className="w-full rounded-lg border border-gray-300 focus:border-blue-500 focus:ring focus:ring-blue-200 transition">
               <SelectValue placeholder={selectedService ? "Select a time" : "Select a service first"} />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className=" bg-white">
               {(selectedService?.timeSlots || []).map((t) => (
                 <SelectItem key={t} value={t}>{t}</SelectItem>
               ))}

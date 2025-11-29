@@ -1,5 +1,6 @@
 import express from 'express'
 import prisma from '../prisma/prismaClient'
+import auth from '../middleware/auth'
 
 const router = express.Router()
 
@@ -15,6 +16,42 @@ router.get('/', async (_req, res) => {
       appointment_date: a.appointmentDate.toISOString(),
       status: a.status,
       service_id: a.serviceId,
+      doctor_id: a.doctorId,
+      created_at: a.createdAt,
+    }))
+    res.json(payload)
+  } catch (err) {
+    res.status(500).json({ message: 'Server error' })
+  }
+})
+
+router.get('/me', auth, async (req, res) => {
+  try {
+    const userId = (req as any).userId as number
+    if (!userId) return res.status(401).json({ message: 'Unauthorized' })
+    const user = await prisma.user.findUnique({ where: { id: userId } })
+    if (!user) return res.status(404).json({ message: 'User not found' })
+
+    // Find doctor by email
+    const doctor = await prisma.doctor.findFirst({ where: { email: user.email } })
+    if (!doctor) return res.status(404).json({ message: 'Doctor profile not found' })
+
+    // Get only appointments assigned to this doctor
+    const appts = await prisma.appointment.findMany({
+      where: { doctorId: doctor.id },
+      orderBy: { createdAt: 'desc' }
+    })
+
+    const payload = appts.map((a) => ({
+      id: a.id,
+      name: a.name,
+      email: a.email,
+      phone: a.phone,
+      description: a.description ?? '',
+      appointment_date: a.appointmentDate.toISOString(),
+      status: a.status,
+      service_id: a.serviceId,
+      doctor_id: a.doctorId,
       created_at: a.createdAt,
     }))
     res.json(payload)
@@ -41,6 +78,14 @@ router.post('/', async (req, res) => {
     const desc = description ? String(description) : ''
     const finalDesc = gender ? `${desc}${desc ? ' | ' : ''}gender:${String(gender)}` : desc
 
+    // Find an available doctor with matching service
+    const availableDoctor = await prisma.doctor.findFirst({
+      where: {
+        service: service.name,
+        status: 'available',
+      },
+    })
+
     const created = await prisma.appointment.create({
       data: {
         name: String(name),
@@ -49,6 +94,7 @@ router.post('/', async (req, res) => {
         description: finalDesc || null,
         appointmentDate: when,
         serviceId: svcId,
+        doctorId: availableDoctor?.id || null,
       },
     })
     res.status(201).json({
@@ -60,6 +106,7 @@ router.post('/', async (req, res) => {
       appointment_date: created.appointmentDate.toISOString(),
       status: created.status,
       service_id: created.serviceId,
+      doctor_id: created.doctorId,
       created_at: created.createdAt,
     })
   } catch (err) {
@@ -68,4 +115,3 @@ router.post('/', async (req, res) => {
 })
 
 export default router
-
