@@ -17,7 +17,7 @@ export function TopBar({ onMenuClick }: TopBarProps) {
       "
     >
       <div className="px-6 py-4 flex items-center justify-between">
-        
+
         {/* LEFT SECTION */}
         <div className="flex items-center gap-4 flex-1">
           <button
