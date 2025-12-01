@@ -27,15 +27,18 @@ export function AppointmentsManager() {
   const [showForm, setShowForm] = useState(false)
   const [selectedAppointment, setSelectedAppointment] = useState<AppointmentRow | null>(null)
   const [editingId, setEditingId] = useState<number | null>(null)
-  const [myDepartment, setMyDepartment] = useState<string | null>(null)
 
   const base = useMemo(() => (process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000") + "/api", [])
 
   const reload = useCallback(async () => {
     try {
+      const r = String(role || '').toLowerCase()
+      // Use /me endpoint for doctors to get only their appointments
+      const appointmentsEndpoint = r === 'doctor' ? `${base}/appointments/me` : `${base}/appointments`
+
       const [servicesRes, apptRes] = await Promise.all([
         fetch(`${base}/services`, { credentials: "include" }),
-        fetch(`${base}/appointments`, { credentials: "include" }),
+        fetch(appointmentsEndpoint, { credentials: "include" }),
       ])
       const servicesData = await servicesRes.json()
       const apptsData = await apptRes.json()
@@ -60,36 +63,11 @@ export function AppointmentsManager() {
         })
       )
     } catch (e) { }
-  }, [base])
+  }, [base, role])
 
   useEffect(() => {
     Promise.resolve().then(reload)
   }, [reload])
-
-  useEffect(() => {
-    const r = String(role || '').toLowerCase()
-    if (r === 'doctor') {
-      const run = async () => {
-        try {
-          const res = await fetch(`${base}/doctors/me`, { credentials: 'include' })
-          if (res.ok) {
-            const me = await res.json()
-            setMyDepartment(String(me.department || ''))
-          }
-        } catch (e) { }
-      }
-      run()
-    }
-  }, [role, base])
-
-  const visibleAppointments = useMemo(() => {
-    const r = String(role || '').toLowerCase()
-    if (r === 'doctor' && myDepartment) {
-      const dept = myDepartment.toLowerCase()
-      return appointments.filter((a) => a.serviceName && a.serviceName.toLowerCase() === dept)
-    }
-    return appointments
-  }, [appointments, role, myDepartment])
 
   const statusColors = {
     scheduled: "bg-blue-100 text-blue-800",
@@ -151,6 +129,8 @@ export function AppointmentsManager() {
         <AppointmentDetail
           appointment={selectedAppointment}
           onClose={() => setSelectedAppointment(null)}
+          role={role}
+          onStatusUpdated={reload}
         />
       )}
 
@@ -172,7 +152,7 @@ export function AppointmentsManager() {
             </thead>
 
             <tbody className="divide-y divide-slate-100">
-              {visibleAppointments.map((appointment) => (
+              {appointments.map((appointment) => (
                 <tr key={appointment.id} className="hover:bg-slate-50 transition-colors">
                   <td className="py-4 px-4 text-slate-700">{appointment.name}</td>
                   <td className="py-4 px-4 text-slate-700">{appointment.email}</td>
@@ -230,7 +210,7 @@ export function AppointmentsManager() {
 
           {/* Mobile Cards */}
           <div className="sm:hidden space-y-4">
-            {visibleAppointments.map((appointment) => (
+            {appointments.map((appointment) => (
               <div
                 key={appointment.id}
                 className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm"
