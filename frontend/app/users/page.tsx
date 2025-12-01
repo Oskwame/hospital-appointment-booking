@@ -169,52 +169,52 @@ export default function UsersPage() {
               <div className="hidden md:block">
                 <div className="overflow-x-auto">
                   <Card className="p-6 bg-white rounded-xl shadow-md border border-slate-200">
-                    <table className="w-full border-collapse text-sm min-w-[600px]">
+                    <table className="w-full border-collapse text-sm min-w-[800px]">
                       <thead className="bg-slate-50 border-b border-slate-200">
                         <tr>
-                          <th className="py-3 px-4 text-left font-semibold text-slate-600 whitespace-nowrap">Name</th>
-                          <th className="py-3 px-4 text-left font-semibold text-slate-600 whitespace-nowrap">Email</th>
-                          <th className="py-3 px-4 text-left font-semibold text-slate-600 whitespace-nowrap">Role</th>
-                          <th className="py-3 px-4 text-left font-semibold text-slate-600 whitespace-nowrap">Status</th>
-                          <th className="py-3 px-4 text-left font-semibold text-slate-600 whitespace-nowrap">Actions</th>
+                          <th className="py-3 px-4 text-left font-semibold text-slate-600 whitespace-nowrap w-[20%]">Full Name</th>
+                          <th className="py-3 px-4 text-left font-semibold text-slate-600 whitespace-nowrap w-[25%]">Email</th>
+                          <th className="py-3 px-4 text-left font-semibold text-slate-600 whitespace-nowrap w-[15%]">Role</th>
+                          <th className="py-3 px-4 text-left font-semibold text-slate-600 whitespace-nowrap w-[15%]">Status</th>
+                          <th className="py-3 px-4 text-right font-semibold text-slate-600 whitespace-nowrap w-[25%]">Actions</th>
                         </tr>
                       </thead>
 
                       <tbody className="divide-y divide-slate-100">
                         {users.map((u) => (
                           <tr key={u.id} className="hover:bg-slate-50 transition-colors">
-                            <td className="py-4 px-4 text-slate-700 whitespace-nowrap">{getUserName(u.email)}</td>
-                            <td className="py-4 px-4 text-slate-700">{u.email}</td>
+                            <td className="py-4 px-4 text-slate-700 font-medium whitespace-nowrap">{getUserName(u.email)}</td>
+                            <td className="py-4 px-4 text-slate-600">{u.email}</td>
                             <td className="py-4 px-4">
-                              <Badge className="px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-700 capitalize whitespace-nowrap">
+                              <Badge className="px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-700 capitalize whitespace-nowrap border-0 shadow-none">
                                 {u.role.toLowerCase()}
                               </Badge>
                             </td>
                             <td className="py-4 px-4">
-                              <Badge className="px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700 whitespace-nowrap">
+                              <Badge className="px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700 whitespace-nowrap border-0 shadow-none">
                                 Active
                               </Badge>
                             </td>
-                            <td className="py-4 px-4">
-                              <div className="flex items-center gap-2">
+                            <td className="py-4 px-4 text-right">
+                              <div className="flex items-center justify-end gap-2">
                                 <button
                                   onClick={() => setViewUser(u)}
                                   title="View user details"
-                                  className="p-2 rounded-md bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors shadow-sm hover:shadow"
+                                  className="p-2 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors"
                                 >
                                   <Eye className="h-4 w-4" />
                                 </button>
                                 <button
                                   onClick={() => setEditUser(u)}
                                   title="Edit user"
-                                  className="p-2 rounded-md bg-amber-50 text-amber-600 hover:bg-amber-100 transition-colors shadow-sm hover:shadow"
+                                  className="p-2 rounded-lg bg-amber-50 text-amber-600 hover:bg-amber-100 transition-colors"
                                 >
                                   <Edit className="h-4 w-4" />
                                 </button>
                                 <button
                                   onClick={() => setDeleteUser(u)}
                                   title="Delete user"
-                                  className="p-2 rounded-md bg-red-50 text-red-600 hover:bg-red-100 transition-colors shadow-sm hover:shadow"
+                                  className="p-2 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 transition-colors"
                                 >
                                   <Trash2 className="h-4 w-4" />
                                 </button>
