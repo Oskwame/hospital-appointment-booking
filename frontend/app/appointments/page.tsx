@@ -17,7 +17,7 @@ export default function AppointmentsPage() {
           <div className="p-6 max-w-7xl mx-auto space-y-6">
             <div>
               <h2 className="text-3xl font-bold text-foreground">Appointments Management</h2>
-              <p className="text-muted-foreground mt-1">Create, view, and manage all appointments.</p>
+              <p className="text-muted-foreground mt-1">View and manage all appointments.</p>
             </div>
             <AppointmentsManager />
           </div>
