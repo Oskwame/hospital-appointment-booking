@@ -5,10 +5,13 @@ import { Sidebar } from "@/components/layout/sidebar"
 import { TopBar } from "@/components/layout/topbar"
 import { ProfileSettings } from "@/components/settings/profile-settings"
 import { SystemSettings } from "@/components/settings/system-settings"
+import { useAuth } from "@/lib/auth-context"
 
 export default function SettingsPage() {
   const [sidebarOpen, setSidebarOpen] = useState(true)
-  const [activeTab, setActiveTab] = useState<"profile" | "system">("profile")
+  const [activeTab, setActiveTab] = useState<"profile" | "security" | "preferences" | "hospital">("profile")
+  const { role } = useAuth()
+  const r = String(role || 'admin').toLowerCase()
 
   return (
     <div className="flex h-screen overflow-hidden bg-background">
@@ -23,29 +26,27 @@ export default function SettingsPage() {
             </div>
 
             <div className="flex gap-4 border-b border-border">
-              <button
-                onClick={() => setActiveTab("profile")}
-                className={`px-4 py-2 font-medium transition-colors ${
-                  activeTab === "profile"
-                    ? "text-primary border-b-2 border-primary"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                Profile
-              </button>
-              <button
-                onClick={() => setActiveTab("system")}
-                className={`px-4 py-2 font-medium transition-colors ${
-                  activeTab === "system"
-                    ? "text-primary border-b-2 border-primary"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                System Settings
-              </button>
+              {[
+                { key: 'profile', label: 'Profile' },
+                { key: 'preferences', label: 'Preferences' },
+                ...(r === 'superadmin' ? [{ key: 'hospital', label: 'Hospital' } as const] : []),
+              ].map((t) => (
+                <button
+                  key={t.key}
+                  onClick={() => setActiveTab(t.key as any)}
+                  className={`px-4 py-2 font-medium transition-colors ${activeTab === t.key
+                      ? "text-primary border-b-2 border-primary"
+                      : "text-muted-foreground hover:text-foreground"
+                    }`}
+                >
+                  {t.label}
+                </button>
+              ))}
             </div>
 
-            {activeTab === "profile" ? <ProfileSettings /> : <SystemSettings />}
+            {activeTab === "profile" && <ProfileSettings />}
+            {activeTab === "preferences" && <SystemSettings />}
+            {activeTab === "hospital" && r === 'superadmin' && <SystemSettings />}
           </div>
         </main>
       </div>

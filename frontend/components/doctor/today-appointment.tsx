@@ -122,7 +122,7 @@ export function TodayAppointments() {
           <div className="p-2 bg-blue-100 rounded-xl">
             <Calendar className="h-5 w-5 text-blue-600" />
           </div>
-          <h3 className="text-xl font-bold text-slate-800">Today's Appointments</h3>
+          <h3 className="text-xl font-bold text-slate-800">Today&apos;s Appointments</h3>
         </div>
         <span className="px-2 py-1 flex flex-col-1 items-center justify-center bg-blue-50 text-blue-700 rounded-full text-sm font-semibold">
           {appointments.length} Total

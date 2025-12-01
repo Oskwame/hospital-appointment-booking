@@ -205,7 +205,7 @@ export function AddUserForm({ open, onOpenChange, onCreated }: AddUserFormProps)
             <DialogHeader>
               <DialogTitle className="text-2xl font-bold text-white mb-2">Verify Identity</DialogTitle>
               <DialogDescription className="text-blue-100 text-base">
-                We've sent a 6-digit code to <br />
+                We&apos;ve sent a 6-digit code to <br />
                 <span className="font-semibold text-white">{email}</span>
               </DialogDescription>
             </DialogHeader>

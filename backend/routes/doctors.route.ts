@@ -46,6 +46,40 @@ router.get('/me', auth, async (req, res) => {
   }
 })
 
+router.put('/me', auth, async (req, res) => {
+  try {
+    const userId = (req as any).userId as number
+    if (!userId) return res.status(401).json({ message: 'Unauthorized' })
+    const user = await prisma.user.findUnique({ where: { id: userId } })
+    if (!user) return res.status(404).json({ message: 'User not found' })
+    const { name, specialization, phone, department } = req.body as any
+    const doctor = await prisma.doctor.findFirst({ where: { email: user.email } })
+    if (!doctor) return res.status(404).json({ message: 'Doctor profile not found' })
+    const updated = await prisma.doctor.update({
+      where: { id: doctor.id },
+      data: {
+        name: typeof name === 'string' ? name : doctor.name,
+        specialization: typeof specialization === 'string' ? specialization : doctor.specialization,
+        phone: typeof phone === 'string' ? phone : doctor.phone,
+        // schema uses 'service' but UI uses 'department'
+        service: typeof department === 'string' ? department : doctor.service,
+      },
+    })
+    return res.json({
+      id: updated.id,
+      name: updated.name,
+      specialization: updated.specialization,
+      email: updated.email,
+      phone: updated.phone,
+      department: updated.service,
+      status: updated.status,
+      created_at: updated.createdAt,
+    })
+  } catch (err) {
+    res.status(500).json({ message: 'Server error' })
+  }
+})
+
 router.post('/', async (req, res) => {
   try {
     const { name, specialization, email, phone, service, status } = req.body as any

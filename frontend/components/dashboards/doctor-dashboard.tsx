@@ -38,7 +38,7 @@ export function DoctorDashboard() {
             {/* Page Title */}
             <div className=" rounded-2xl p-6  shadow-lg">
               <h2 className="text-3xl font-bold">Welcome Back, {doctorName}! </h2>
-              <p className="mt-2 text-gray-500">Here's your schedule and patient information for today.</p>
+              <p className="mt-2 text-gray-500">Here&apos;s your schedule and patient information for today.</p>
             </div>
 
             {/* Main Content */}

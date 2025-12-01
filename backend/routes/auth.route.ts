@@ -9,6 +9,25 @@ import nodemailer from 'nodemailer'
 const otpStore = new Map<string, { code: string; expires: number }>()
 const OTP_TTL_MS = 10 * 60 * 1000
 
+// simple in-memory preferences per user
+const userPrefs = new Map<number, { autoApproval: boolean; emailNotifications: boolean }>()
+// simple in-memory hospital settings
+let hospitalSettings: {
+  hospitalName: string
+  email: string
+  phone: string
+  address: string
+  timezone: string
+  dataRetention: string
+} = {
+  hospitalName: 'Kasa Family Hospital',
+  email: 'info@kasa.com',
+  phone: '+1 234-567-8900',
+  address: '123 Healthcare Avenue, Medical City',
+  timezone: 'UTC-5',
+  dataRetention: '2 years',
+}
+
 function createTransport() {
   const host = process.env.SMTP_HOST
   const port = process.env.SMTP_PORT ? parseInt(process.env.SMTP_PORT) : undefined
@@ -92,6 +111,41 @@ router.post('/users/request-otp', auth, async (req, res) => {
     console.error('Request OTP error:', err)
     return res.status(500).json({ message: 'Server error' })
   }
+})
+
+// GET current user's preferences
+router.get('/preferences', auth, async (req, res) => {
+  const id = (req as any).userId as number
+  const prefs = userPrefs.get(id) || { autoApproval: false, emailNotifications: true }
+  res.json(prefs)
+})
+
+// Update current user's preferences
+router.put('/preferences', auth, async (req, res) => {
+  const id = (req as any).userId as number
+  const { autoApproval, emailNotifications } = req.body as any
+  const current = userPrefs.get(id) || { autoApproval: false, emailNotifications: true }
+  const updated = {
+    autoApproval: typeof autoApproval === 'boolean' ? autoApproval : current.autoApproval,
+    emailNotifications: typeof emailNotifications === 'boolean' ? emailNotifications : current.emailNotifications,
+  }
+  userPrefs.set(id, updated)
+  res.json(updated)
+})
+
+// Hospital settings (SUPERADMIN only)
+router.get('/hospital', auth, async (req, res) => {
+  const role = String((req as any).userRole || '').toUpperCase()
+  if (role !== 'SUPERADMIN') return res.status(403).json({ message: 'Forbidden' })
+  res.json(hospitalSettings)
+})
+
+router.put('/hospital', auth, async (req, res) => {
+  const role = String((req as any).userRole || '').toUpperCase()
+  if (role !== 'SUPERADMIN') return res.status(403).json({ message: 'Forbidden' })
+  const payload = req.body as Partial<typeof hospitalSettings>
+  hospitalSettings = { ...hospitalSettings, ...payload }
+  res.json(hospitalSettings)
 })
 
 // POST /api/auth/users  (SUPERADMIN only)
@@ -184,13 +238,83 @@ router.get('/me', auth, async (req, res) => {
   }
 })
 
+// Request OTP for email change
+router.post('/request-email-change-otp', auth, async (req, res) => {
+  try {
+    const { newEmail } = req.body
+    if (!newEmail || typeof newEmail !== 'string') {
+      return res.status(400).json({ message: 'New email is required' })
+    }
+
+    // Check if email is already in use
+    const existing = await prisma.user.findUnique({ where: { email: newEmail } })
+    if (existing) {
+      return res.status(409).json({ message: 'Email is already in use' })
+    }
+
+    const code = String(Math.floor(100000 + Math.random() * 900000))
+    otpStore.set(newEmail, { code, expires: Date.now() + OTP_TTL_MS })
+
+    const transporter = createTransport()
+    const from = process.env.SMTP_FROM || process.env.SMTP_USER || 'no-reply@example.com'
+    const body = `Your verification code for email change is ${code}. It expires in 10 minutes.`
+
+    if (transporter) {
+      await transporter.sendMail({ from, to: newEmail, subject: 'Email Change Verification', text: body })
+    } else {
+      console.log('[DEV] Email Change OTP for', newEmail, 'is', code)
+    }
+
+    res.json({ message: 'OTP sent' })
+  } catch (err) {
+    console.error('Request OTP error:', err)
+    res.status(500).json({ message: 'Server error' })
+  }
+})
+
 router.put('/profile', auth, async (req, res) => {
   try {
-    if (String((req as any).userRole).toUpperCase() !== 'ADMIN') return res.status(403).json({ message: 'Forbidden' })
-    const { email } = req.body
-    const updated = await prisma.user.update({ where: { id: (req as any).userId }, data: { email } })
+    const { email, otp } = req.body
+    const userId = (req as any).userId as number
+
+    if (!email || typeof email !== 'string') return res.status(400).json({ message: 'Invalid email' })
+
+    const user = await prisma.user.findUnique({ where: { id: userId } })
+    if (!user) return res.status(404).json({ message: 'User not found' })
+
+    // If email is changing, verify OTP
+    if (email !== user.email) {
+      if (!otp) {
+        return res.status(400).json({ message: 'OTP is required to change email' })
+      }
+
+      const rec = otpStore.get(email)
+      if (!rec || rec.code !== String(otp) || rec.expires < Date.now()) {
+        return res.status(400).json({ message: 'Invalid or expired OTP' })
+      }
+
+      // Check if email is taken (double check)
+      const existing = await prisma.user.findUnique({ where: { email } })
+      if (existing) {
+        return res.status(409).json({ message: 'Email is already in use' })
+      }
+
+      otpStore.delete(email)
+    }
+
+    const updated = await prisma.user.update({ where: { id: userId }, data: { email } })
+
+    // If user is a doctor, update doctor record too
+    if (user.role === 'DOCTOR') {
+      await prisma.doctor.updateMany({
+        where: { email: user.email }, // use old email to find
+        data: { email: updated.email }
+      })
+    }
+
     res.json({ id: updated.id, email: updated.email })
   } catch (err) {
+    console.error('Update profile error:', err)
     res.status(500).json({ message: 'Server error' })
   }
 })
