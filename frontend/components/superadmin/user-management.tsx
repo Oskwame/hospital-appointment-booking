@@ -20,7 +20,7 @@ export function UserManagement() {
     { id: 2, name: "Admin John Doe", email: "admin@kasa.com", role: "admin", status: "Active" },
   ])
   const [open, setOpen] = useState(false)
-  
+
 
   useEffect(() => {
     const run = async () => {
@@ -39,12 +39,12 @@ export function UserManagement() {
             }))
           )
         }
-      } catch (e) {}
+      } catch (e) { }
     }
     run()
   }, [])
 
-  
+
 
   return (
     <div className="bg-card border border-border rounded-xl p-6 shadow-sm">
