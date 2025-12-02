@@ -1,10 +1,11 @@
 "use client"
 
+import React, { useState, useEffect } from "react"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { X, Mail, CheckCircle, PlayCircle, Clock, XCircle } from "lucide-react"
-import { useState } from "react"
+
 
 type Role = "admin" | "superadmin" | "doctor" | null
 
@@ -25,9 +26,82 @@ interface AppointmentDetailProps {
   onStatusUpdated?: () => void
 }
 
+const getStatusColor = (status: string) => {
+  switch (status.toLowerCase()) {
+    case 'completed':
+      return "bg-green-100 text-green-700 border-green-300"
+    case 'confirmed':
+    case 'in progress':
+      return "bg-blue-100 text-blue-700 border-blue-300"
+    case 'cancelled':
+      return "bg-red-100 text-red-700 border-red-300"
+    default:
+      return "bg-amber-100 text-amber-700 border-amber-300"
+  }
+}
+
 export function AppointmentDetail({ appointment, onClose, role, onStatusUpdated }: AppointmentDetailProps) {
+  const [doctors, setDoctors] = useState<Array<{ id: number; name: string; service: string }>>([])
+  const [selectedDoctorId, setSelectedDoctorId] = useState<string>("")
+  const [showReassign, setShowReassign] = useState(false)
   const [updating, setUpdating] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  const isAdmin = role === 'admin' || role === 'superadmin'
+  const isDoctor = role === 'doctor'
+
+  const canCancel = appointment.status !== 'cancelled' && appointment.status !== 'completed'
+  const canConfirm = appointment.status === 'pending' || appointment.status === 'scheduled' // Assuming 'pending' or 'scheduled' are initial states
+  const canStart = appointment.status === 'confirmed'
+  const canComplete = appointment.status === 'in progress'
+
+  useEffect(() => {
+    if (isAdmin && showReassign) {
+      const fetchDoctors = async () => {
+        try {
+          const base = (process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000") + "/api"
+          const res = await fetch(`${base}/doctors`, { credentials: "include" })
+          if (res.ok) {
+            const data = await res.json()
+            // Filter doctors that match the appointment service if possible, or show all
+            // For now showing all, but ideally should filter by service
+            setDoctors(data)
+          }
+        } catch (e) {
+          console.error("Failed to fetch doctors", e)
+        }
+      }
+      fetchDoctors()
+    }
+  }, [isAdmin, showReassign])
+
+  const handleReassign = async () => {
+    if (!selectedDoctorId) return
+
+    setError(null)
+    setUpdating(true)
+    try {
+      const base = (process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000") + "/api"
+      const res = await fetch(`${base}/appointments/${appointment.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ doctorId: parseInt(selectedDoctorId) }),
+      })
+
+      if (!res.ok) {
+        const msg = await res.json().catch(() => ({}))
+        throw new Error(msg?.message || "Failed to reassign appointment")
+      }
+
+      onStatusUpdated?.()
+      onClose()
+    } catch (e: any) {
+      setError(e.message || "Failed to reassign appointment")
+    } finally {
+      setUpdating(false)
+    }
+  }
 
   const updateStatus = async (newStatus: string) => {
     setError(null)
@@ -43,37 +117,17 @@ export function AppointmentDetail({ appointment, onClose, role, onStatusUpdated 
 
       if (!res.ok) {
         const msg = await res.json().catch(() => ({}))
-        throw new Error(msg?.message || "Failed to update appointment")
+        throw new Error(msg?.message || "Failed to update status")
       }
 
       onStatusUpdated?.()
       onClose()
     } catch (e: any) {
-      setError(e.message || "Failed to update appointment")
+      setError(e.message || "Failed to update status")
     } finally {
       setUpdating(false)
     }
   }
-
-  const getStatusColor = (status: string) => {
-    switch (status.toLowerCase()) {
-      case 'completed':
-        return "bg-green-100 text-green-700 border-green-300"
-      case 'confirmed':
-      case 'in progress':
-        return "bg-blue-100 text-blue-700 border-blue-300"
-      case 'cancelled':
-        return "bg-red-100 text-red-700 border-red-300"
-      default:
-        return "bg-amber-100 text-amber-700 border-amber-300"
-    }
-  }
-
-  const isDoctor = role === "doctor"
-  const canConfirm = isDoctor && ['pending', 'booked'].includes(appointment.status.trim().toLowerCase())
-  const canStart = isDoctor && ['confirmed'].includes(appointment.status.trim().toLowerCase())
-  const canComplete = isDoctor && ['confirmed', 'in progress'].includes(appointment.status.trim().toLowerCase())
-  const canCancel = isDoctor && !['cancelled', 'completed'].includes(appointment.status.trim().toLowerCase())
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
@@ -131,12 +185,48 @@ export function AppointmentDetail({ appointment, onClose, role, onStatusUpdated 
             </p>
           </div>
 
-          {appointment.doctorName && (
+          {appointment.doctorName && !showReassign && (
             <div>
               <p className="text-xs text-slate-500">Assigned Doctor</p>
               <p className="text-slate-800 font-medium text-sm">
                 {appointment.doctorName}
               </p>
+            </div>
+          )}
+
+          {isAdmin && showReassign && (
+            <div className="bg-blue-50 p-3 rounded-xl border border-blue-100">
+              <label className="block text-xs font-medium text-blue-700 mb-1">Reassign to Doctor</label>
+              <select
+                className="w-full p-2 rounded-lg border border-blue-200 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                value={selectedDoctorId}
+                onChange={(e) => setSelectedDoctorId(e.target.value)}
+              >
+                <option value="">Select a doctor...</option>
+                {doctors.map(d => (
+                  <option key={d.id} value={d.id}>
+                    {d.name} ({d.service})
+                  </option>
+                ))}
+              </select>
+              <div className="flex gap-2 mt-3">
+                <Button
+                  size="sm"
+                  onClick={handleReassign}
+                  disabled={!selectedDoctorId || updating}
+                  className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
+                >
+                  {updating ? "Saving..." : "Confirm"}
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setShowReassign(false)}
+                  className="flex-1"
+                >
+                  Cancel
+                </Button>
+              </div>
             </div>
           )}
 
@@ -238,13 +328,23 @@ export function AppointmentDetail({ appointment, onClose, role, onStatusUpdated 
               )}
             </>
           ) : (
-            <Button
-              variant="outline"
-              onClick={onClose}
-              className="w-full border-slate-300 text-slate-700 hover:bg-slate-100 rounded-xl"
-            >
-              Close
-            </Button>
+            <>
+              {isAdmin && !showReassign && (
+                <Button
+                  onClick={() => setShowReassign(true)}
+                  className="w-full bg-blue-600 text-white hover:bg-blue-700 rounded-xl mb-2"
+                >
+                  Reassign Doctor
+                </Button>
+              )}
+              <Button
+                variant="outline"
+                onClick={onClose}
+                className="w-full border-slate-300 text-slate-700 hover:bg-slate-100 rounded-xl"
+              >
+                Close
+              </Button>
+            </>
           )}
         </div>
       </Card>
