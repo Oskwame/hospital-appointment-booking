@@ -18,6 +18,7 @@ interface AppointmentDetailProps {
     time: string
     status: string
     description: string
+    doctorName?: string
   }
   onClose: () => void
   role?: Role
@@ -129,6 +130,15 @@ export function AppointmentDetail({ appointment, onClose, role, onStatusUpdated 
               {appointment.serviceName}
             </p>
           </div>
+
+          {appointment.doctorName && (
+            <div>
+              <p className="text-xs text-slate-500">Assigned Doctor</p>
+              <p className="text-slate-800 font-medium text-sm">
+                {appointment.doctorName}
+              </p>
+            </div>
+          )}
 
           <div className="grid grid-cols-2 gap-4">
             <div>

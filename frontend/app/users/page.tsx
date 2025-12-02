@@ -17,6 +17,7 @@ interface User {
   email: string
   role: string
   createdAt: string
+  deletedAt: string | null
 }
 
 export default function UsersPage() {
@@ -26,6 +27,7 @@ export default function UsersPage() {
   const [users, setUsers] = useState<User[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [showDeactivated, setShowDeactivated] = useState(false)
 
   // Modal states
   const [viewUser, setViewUser] = useState<User | null>(null)
@@ -36,14 +38,15 @@ export default function UsersPage() {
   // Fetch users from API
   useEffect(() => {
     fetchUsers()
-  }, [])
+  }, [showDeactivated])
 
   const fetchUsers = async () => {
     try {
       setLoading(true)
       setError(null)
       const base = (process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000") + "/api"
-      const res = await fetch(`${base}/auth/users`, {
+      const endpoint = showDeactivated ? `${base}/auth/users/deactivated` : `${base}/auth/users`
+      const res = await fetch(endpoint, {
         credentials: "include",
       })
 
@@ -74,17 +77,38 @@ export default function UsersPage() {
 
       if (!res.ok) {
         const data = await res.json()
-        throw new Error(data.message || 'Failed to delete user')
+        throw new Error(data.message || 'Failed to deactivate user')
       }
 
       // Refresh the list
       await fetchUsers()
       setDeleteUser(null)
     } catch (err: any) {
-      console.error('Error deleting user:', err)
-      setError(err.message || 'Failed to delete user')
+      console.error('Error deactivating user:', err)
+      setError(err.message || 'Failed to deactivate user')
     } finally {
       setDeleting(false)
+    }
+  }
+
+  const handleReactivate = async (userId: number) => {
+    try {
+      const base = (process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000") + "/api"
+      const res = await fetch(`${base}/auth/users/${userId}/restore`, {
+        method: "PATCH",
+        credentials: "include",
+      })
+
+      if (!res.ok) {
+        const data = await res.json()
+        throw new Error(data.message || 'Failed to reactivate user')
+      }
+
+      // Refresh the list
+      await fetchUsers()
+    } catch (err: any) {
+      console.error('Error reactivating user:', err)
+      setError(err.message || 'Failed to reactivate user')
     }
   }
 
@@ -191,8 +215,11 @@ export default function UsersPage() {
                               </Badge>
                             </td>
                             <td className="py-4 px-4">
-                              <Badge className="px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700 whitespace-nowrap border-0 shadow-none">
-                                Active
+                              <Badge className={`px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap border-0 shadow-none ${u.deletedAt
+                                ? "bg-orange-100 text-orange-700"
+                                : "bg-green-100 text-green-700"
+                                }`}>
+                                {u.deletedAt ? "Deactivated" : "Active"}
                               </Badge>
                             </td>
                             <td className="py-4 px-4 text-right">
@@ -204,20 +231,32 @@ export default function UsersPage() {
                                 >
                                   <Eye className="h-4 w-4" />
                                 </button>
-                                <button
-                                  onClick={() => setEditUser(u)}
-                                  title="Edit user"
-                                  className="p-2 rounded-lg bg-amber-50 text-amber-600 hover:bg-amber-100 transition-colors"
-                                >
-                                  <Edit className="h-4 w-4" />
-                                </button>
-                                <button
-                                  onClick={() => setDeleteUser(u)}
-                                  title="Delete user"
-                                  className="p-2 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 transition-colors"
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                </button>
+                                {!u.deletedAt ? (
+                                  <>
+                                    <button
+                                      onClick={() => setEditUser(u)}
+                                      title="Edit user"
+                                      className="p-2 rounded-lg bg-amber-50 text-amber-600 hover:bg-amber-100 transition-colors"
+                                    >
+                                      <Edit className="h-4 w-4" />
+                                    </button>
+                                    <button
+                                      onClick={() => setDeleteUser(u)}
+                                      title="Deactivate user"
+                                      className="p-2 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 transition-colors"
+                                    >
+                                      <Trash2 className="h-4 w-4" />
+                                    </button>
+                                  </>
+                                ) : (
+                                  <button
+                                    onClick={() => handleReactivate(u.id)}
+                                    title="Reactivate user"
+                                    className="p-2 rounded-lg bg-green-50 text-green-600 hover:bg-green-100 transition-colors"
+                                  >
+                                    <Plus className="h-4 w-4" />
+                                  </button>
+                                )}
                               </div>
                             </td>
                           </tr>
@@ -239,8 +278,11 @@ export default function UsersPage() {
                         <h4 className="font-semibold text-slate-700">{getUserName(u.email)}</h4>
                         <p className="text-sm text-slate-500 mt-1">{u.email}</p>
                       </div>
-                      <Badge className="px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700">
-                        Active
+                      <Badge className={`px-3 py-1 rounded-full text-xs font-medium ${u.deletedAt
+                          ? "bg-orange-100 text-orange-700"
+                          : "bg-green-100 text-green-700"
+                        }`}>
+                        {u.deletedAt ? "Deactivated" : "Active"}
                       </Badge>
                     </div>
                     <div className="mb-3">
@@ -256,23 +298,50 @@ export default function UsersPage() {
                         <Eye className="h-4 w-4" />
                         <span className="text-sm">View</span>
                       </button>
-                      <button
-                        onClick={() => setEditUser(u)}
-                        className="flex-1 p-2 rounded-md bg-amber-50 text-amber-600 hover:bg-amber-100 transition-colors flex items-center justify-center gap-2 shadow-sm hover:shadow"
-                      >
-                        <Edit className="h-4 w-4" />
-                        <span className="text-sm">Edit</span>
-                      </button>
-                      <button
-                        onClick={() => setDeleteUser(u)}
-                        className="flex-1 p-2 rounded-md bg-red-50 text-red-600 hover:bg-red-100 transition-colors flex items-center justify-center gap-2 shadow-sm hover:shadow"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                        <span className="text-sm">Delete</span>
-                      </button>
+                      {!u.deletedAt ? (
+                        <>
+                          <button
+                            onClick={() => setEditUser(u)}
+                            className="flex-1 p-2 rounded-md bg-amber-50 text-amber-600 hover:bg-amber-100 transition-colors flex items-center justify-center gap-2 shadow-sm hover:shadow"
+                          >
+                            <Edit className="h-4 w-4" />
+                            <span className="text-sm">Edit</span>
+                          </button>
+                          <button
+                            onClick={() => setDeleteUser(u)}
+                            className="flex-1 p-2 rounded-md bg-red-50 text-red-600 hover:bg-red-100 transition-colors flex items-center justify-center gap-2 shadow-sm hover:shadow"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                            <span className="text-sm">Deactivate</span>
+                          </button>
+                        </>
+                      ) : (
+                        <button
+                          onClick={() => handleReactivate(u.id)}
+                          className="flex-1 p-2 rounded-md bg-green-50 text-green-600 hover:bg-green-100 transition-colors flex items-center justify-center gap-2 shadow-sm hover:shadow"
+                        >
+                          <Plus className="h-4 w-4" />
+                          <span className="text-sm">Reactivate</span>
+                        </button>
+                      )}
                     </div>
                   </div>
                 ))}
+              </div>
+            )}
+
+            {/* Toggle button at bottom right */}
+            {!loading && !error && (
+              <div className="flex justify-end mt-6">
+                <button
+                  onClick={() => setShowDeactivated(!showDeactivated)}
+                  className={`px-4 py-2 text-sm rounded-md transition-colors shadow-sm ${showDeactivated
+                    ? "bg-orange-100 text-orange-700 hover:bg-orange-200"
+                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                    }`}
+                >
+                  {showDeactivated ? "Show Active Users" : "Show Deactivated Users"}
+                </button>
               </div>
             )}
           </div>

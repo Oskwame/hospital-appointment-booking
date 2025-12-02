@@ -13,6 +13,8 @@ import {
   FaPills,
   FaHospital,
   FaStethoscope,
+  FaBaby,
+  FaMicroscope
 } from "react-icons/fa"
 
 interface Service {
@@ -86,6 +88,8 @@ export function ServiceForm({ service, onSubmit, onCancel }: ServiceFormProps) {
     { key: "Pills", Icon: FaPills },
     { key: "Hospital", Icon: FaHospital },
     { key: "Stethoscope", Icon: FaStethoscope },
+    { key: "Baby", Icon: FaBaby },
+    { key: "Microscope", Icon: FaMicroscope },
   ]
 
   return (
@@ -135,11 +139,10 @@ export function ServiceForm({ service, onSubmit, onCancel }: ServiceFormProps) {
                 type="button"
                 onClick={() => setIcon(key)}
                 aria-pressed={icon === key}
-                className={`w-12 h-12 rounded-xl flex items-center justify-center border transition-shadow duration-150 ${
-                  icon === key
-                    ? "border-blue-600 bg-blue-50 shadow-md"
-                    : "border-gray-200 hover:border-blue-300 hover:shadow-sm"
-                }`}
+                className={`w-12 h-12 rounded-xl flex items-center justify-center border transition-shadow duration-150 ${icon === key
+                  ? "border-blue-600 bg-blue-50 shadow-md"
+                  : "border-gray-200 hover:border-blue-300 hover:shadow-sm"
+                  }`}
                 title={key}
               >
                 <Icon className="text-blue-600 text-lg" />
