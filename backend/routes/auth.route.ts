@@ -229,6 +229,37 @@ router.get('/users', auth, async (req, res) => {
   }
 })
 
+// GET /api/auth/users/deactivated  (SUPERADMIN only)
+router.get('/users/deactivated', auth, async (req, res) => {
+  try {
+    const role = String((req as any).userRole || '').toUpperCase()
+    if (role !== 'SUPERADMIN') {
+      return res.status(403).json({ message: 'Forbidden' })
+    }
+
+    const users = await prisma.user.findMany({
+      where: {
+        deletedAt: { not: null }, // Only deactivated users
+      },
+      select: {
+        id: true,
+        email: true,
+        role: true,
+        createdAt: true,
+        deletedAt: true,
+      },
+      orderBy: {
+        deletedAt: 'desc',
+      },
+    })
+
+    return res.json(users)
+  } catch (err) {
+    console.error('Fetch deactivated users error:', err)
+    return res.status(500).json({ message: 'Server error' })
+  }
+})
+
 router.get('/me', auth, async (req, res) => {
   try {
     const user = await prisma.user.findUnique({

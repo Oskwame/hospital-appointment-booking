@@ -6,7 +6,12 @@ const router = express.Router()
 
 router.get('/', async (_req, res) => {
   try {
-    const appts = await prisma.appointment.findMany({ orderBy: { createdAt: 'desc' } })
+    const appts = await prisma.appointment.findMany({
+      include: {
+        doctor: true
+      },
+      orderBy: { createdAt: 'desc' }
+    })
     const payload = appts.map((a) => ({
       id: a.id,
       name: a.name,
@@ -17,6 +22,7 @@ router.get('/', async (_req, res) => {
       status: a.status,
       service_id: a.serviceId,
       doctor_id: a.doctorId,
+      doctor_name: a.doctor?.name || null,
       created_at: a.createdAt,
     }))
     res.json(payload)
@@ -39,6 +45,9 @@ router.get('/me', auth, async (req, res) => {
     // Get only appointments assigned to this doctor
     const appts = await prisma.appointment.findMany({
       where: { doctorId: doctor.id },
+      include: {
+        doctor: true
+      },
       orderBy: { createdAt: 'desc' }
     })
 
@@ -52,6 +61,7 @@ router.get('/me', auth, async (req, res) => {
       status: a.status,
       service_id: a.serviceId,
       doctor_id: a.doctorId,
+      doctor_name: a.doctor?.name || null,
       created_at: a.createdAt,
     }))
     res.json(payload)
@@ -62,16 +72,33 @@ router.get('/me', auth, async (req, res) => {
 
 router.post('/', async (req, res) => {
   try {
-    const { name, email, gender, description, serviceId, date, time } = req.body as any
-    if (!name || !email || !serviceId || !date || !time) {
+    const { name, email, gender, description, serviceId, date, session } = req.body as any
+    if (!name || !email || !serviceId || !date || !session) {
       return res.status(400).json({ message: 'Missing required fields' })
     }
+
+    // Map session to time
+    let time: string
+    switch (session.toLowerCase()) {
+      case 'morning':
+        time = '07:00'
+        break
+      case 'afternoon':
+        time = '11:00'
+        break
+      case 'evening':
+        time = '15:00'
+        break
+      default:
+        return res.status(400).json({ message: 'Invalid session. Must be morning, afternoon, or evening' })
+    }
+
     const svcId = Number(serviceId)
     if (!Number.isInteger(svcId)) return res.status(400).json({ message: 'Invalid serviceId' })
     const service = await prisma.service.findUnique({ where: { id: svcId } })
     if (!service) return res.status(404).json({ message: 'Service not found' })
 
-    const iso = `${String(date)}T${String(time)}:00`
+    const iso = `${String(date)}T${time}:00`
     const when = new Date(iso)
     if (Number.isNaN(when.getTime())) return res.status(400).json({ message: 'Invalid date/time' })
 
@@ -107,6 +134,7 @@ router.post('/', async (req, res) => {
       status: created.status,
       service_id: created.serviceId,
       doctor_id: created.doctorId,
+      session: session,
       created_at: created.createdAt,
     })
   } catch (err) {

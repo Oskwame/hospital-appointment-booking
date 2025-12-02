@@ -18,6 +18,7 @@ interface AppointmentRow {
   time: string
   status: string
   description: string
+  doctorName?: string
 }
 
 export function AppointmentsManager() {
@@ -59,11 +60,21 @@ export function AppointmentsManager() {
             time: t,
             status: a.status || "booked",
             description: a.description || "",
+            doctorName: a.doctor?.name || (a.doctor_name) || undefined,
           } as AppointmentRow
         })
       )
     } catch (e) { }
   }, [base, role])
+
+  // Helper function to get session from time
+  const getSessionFromTime = (time: string): string => {
+    const hour = parseInt(time.split(':')[0])
+    if (hour >= 7 && hour < 10) return 'Morning'
+    if (hour >= 11 && hour < 15) return 'Afternoon'
+    if (hour >= 15 && hour < 18) return 'Evening'
+    return time
+  }
 
   useEffect(() => {
     Promise.resolve().then(reload)
@@ -158,7 +169,7 @@ export function AppointmentsManager() {
                   <td className="py-4 px-4 text-slate-700">{appointment.email}</td>
                   <td className="py-4 px-4 text-slate-700">{appointment.serviceName}</td>
                   <td className="py-4 px-4 text-slate-700">
-                    {appointment.date} {appointment.time}
+                    {appointment.date} - {getSessionFromTime(appointment.time)}
                   </td>
                   <td className="py-4 px-4 text-slate-700 max-w-xs truncate">
                     {appointment.description}
@@ -233,7 +244,7 @@ export function AppointmentsManager() {
 
                 <p className="text-sm text-slate-500">
                   <span className="font-medium text-slate-600">Date:</span>{" "}
-                  {appointment.date} {appointment.time}
+                  {appointment.date} - {getSessionFromTime(appointment.time)}
                 </p>
 
                 {appointment.description && (

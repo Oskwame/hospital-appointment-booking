@@ -149,9 +149,15 @@ export function AppointmentDetail({ appointment, onClose, role, onStatusUpdated 
             </div>
 
             <div>
-              <p className="text-xs text-slate-500">Time</p>
+              <p className="text-xs text-slate-500">Session</p>
               <p className="text-slate-800 font-medium text-sm">
-                {appointment.time}
+                {(() => {
+                  const hour = parseInt(appointment.time.split(':')[0])
+                  if (hour >= 7 && hour < 10) return 'Morning (7AM-10AM)'
+                  if (hour >= 11 && hour < 15) return 'Afternoon (11AM-3PM)'
+                  if (hour >= 15 && hour < 18) return 'Evening (3PM-6PM)'
+                  return appointment.time
+                })()}
               </p>
             </div>
           </div>

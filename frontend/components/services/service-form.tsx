@@ -24,6 +24,7 @@ interface Service {
   icon: string
   availableDates: string[]
   timeSlots: string[]
+  availableSessions?: string[]
 }
 
 interface ServiceFormProps {
@@ -38,6 +39,9 @@ export function ServiceForm({ service, onSubmit, onCancel }: ServiceFormProps) {
   const [icon, setIcon] = useState(service?.icon || "")
   const [availableDates, setAvailableDates] = useState<string[]>(service?.availableDates || [])
   const [timeSlots, setTimeSlots] = useState<string[]>(service?.timeSlots || [])
+  const [availableSessions, setAvailableSessions] = useState<string[]>(
+    service?.availableSessions || ['morning', 'afternoon', 'evening']
+  )
   const [newDate, setNewDate] = useState("")
   const [newTime, setNewTime] = useState("")
   const [loading, setLoading] = useState(false)
@@ -73,9 +77,17 @@ export function ServiceForm({ service, onSubmit, onCancel }: ServiceFormProps) {
 
     setLoading(true)
     try {
-      await onSubmit({ name, description, icon, availableDates, timeSlots })
+      await onSubmit({ name, description, icon, availableDates, timeSlots, availableSessions })
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleSessionToggle = (session: string) => {
+    if (availableSessions.includes(session)) {
+      setAvailableSessions(availableSessions.filter(s => s !== session))
+    } else {
+      setAvailableSessions([...availableSessions, session])
     }
   }
 
@@ -159,6 +171,33 @@ export function ServiceForm({ service, onSubmit, onCancel }: ServiceFormProps) {
             className="w-full mt-3 px-4 py-3 border border-gray-200 rounded-xl shadow-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
             aria-label="Icon text input"
           />
+        </div>
+
+        {/* Available Sessions */}
+        <div className="pt-6 border-t border-gray-100 space-y-4">
+          <h4 className="text-lg font-semibold text-slate-800">Available Sessions</h4>
+          <p className="text-sm text-slate-500">Select which time sessions are available for this service</p>
+
+          <div className="space-y-2">
+            {[
+              { value: 'morning', label: 'Morning (7:00 AM - 10:00 AM)' },
+              { value: 'afternoon', label: 'Afternoon (11:00 AM - 3:00 PM)' },
+              { value: 'evening', label: 'Evening (3:00 PM - 6:00 PM)' }
+            ].map(session => (
+              <label
+                key={session.value}
+                className="flex items-center gap-3 px-4 py-3 border border-gray-200 rounded-xl cursor-pointer hover:bg-blue-50 transition"
+              >
+                <input
+                  type="checkbox"
+                  checked={availableSessions.includes(session.value)}
+                  onChange={() => handleSessionToggle(session.value)}
+                  className="w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500"
+                />
+                <span className="text-sm font-medium text-slate-700">{session.label}</span>
+              </label>
+            ))}
+          </div>
         </div>
 
         {/* Available Dates */}
