@@ -207,11 +207,15 @@ router.get('/users', auth, async (req, res) => {
     }
 
     const users = await prisma.user.findMany({
+      where: {
+        deletedAt: null, // Only active users
+      },
       select: {
         id: true,
         email: true,
         role: true,
         createdAt: true,
+        deletedAt: true,
       },
       orderBy: {
         createdAt: 'desc',
@@ -415,7 +419,7 @@ router.patch('/users/:id', auth, async (req, res) => {
   }
 })
 
-// DELETE /api/auth/users/:id  (SUPERADMIN only)
+// DELETE /api/auth/users/:id  (SUPERADMIN only) - Soft Delete
 router.delete('/users/:id', auth, async (req, res) => {
   try {
     const role = String((req as any).userRole || '').toUpperCase()
@@ -428,9 +432,9 @@ router.delete('/users/:id', auth, async (req, res) => {
       return res.status(400).json({ message: 'Invalid user ID' })
     }
 
-    // Prevent deleting yourself
+    // Prevent deactivating yourself
     if (userId === (req as any).userId) {
-      return res.status(400).json({ message: 'Cannot delete your own account' })
+      return res.status(400).json({ message: 'Cannot deactivate your own account' })
     }
 
     const user = await prisma.user.findUnique({ where: { id: userId } })
@@ -438,10 +442,44 @@ router.delete('/users/:id', auth, async (req, res) => {
       return res.status(404).json({ message: 'User not found' })
     }
 
-    await prisma.user.delete({ where: { id: userId } })
-    return res.json({ message: 'User deleted successfully' })
+    // Soft delete by setting deletedAt
+    await prisma.user.update({
+      where: { id: userId },
+      data: { deletedAt: new Date() }
+    })
+    return res.json({ message: 'User deactivated successfully' })
   } catch (err) {
-    console.error('Delete user error:', err)
+    console.error('Deactivate user error:', err)
+    return res.status(500).json({ message: 'Server error' })
+  }
+})
+
+// PATCH /api/auth/users/:id/restore  (SUPERADMIN only) - Reactivate user
+router.patch('/users/:id/restore', auth, async (req, res) => {
+  try {
+    const role = String((req as any).userRole || '').toUpperCase()
+    if (role !== 'SUPERADMIN') {
+      return res.status(403).json({ message: 'Forbidden' })
+    }
+
+    const userId = parseInt(req.params.id)
+    if (isNaN(userId)) {
+      return res.status(400).json({ message: 'Invalid user ID' })
+    }
+
+    const user = await prisma.user.findUnique({ where: { id: userId } })
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' })
+    }
+
+    // Reactivate by clearing deletedAt
+    await prisma.user.update({
+      where: { id: userId },
+      data: { deletedAt: null }
+    })
+    return res.json({ message: 'User activated successfully' })
+  } catch (err) {
+    console.error('Activate user error:', err)
     return res.status(500).json({ message: 'Server error' })
   }
 })
