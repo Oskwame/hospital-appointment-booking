@@ -35,6 +35,8 @@ const getStatusColor = (status: string) => {
       return "bg-blue-100 text-blue-700 border-blue-300"
     case 'cancelled':
       return "bg-red-100 text-red-700 border-red-300"
+    case 'pending':
+      return "bg-orange-100 text-orange-700 border-orange-300"
     default:
       return "bg-amber-100 text-amber-700 border-amber-300"
   }
@@ -50,8 +52,9 @@ export function AppointmentDetail({ appointment, onClose, role, onStatusUpdated 
   const isAdmin = role === 'admin' || role === 'superadmin'
   const isDoctor = role === 'doctor'
 
-  const canCancel = appointment.status !== 'cancelled' && appointment.status !== 'completed'
-  const canConfirm = appointment.status === 'pending' || appointment.status === 'scheduled' // Assuming 'pending' or 'scheduled' are initial states
+  const canCancel = appointment.status !== 'cancelled' && appointment.status !== 'completed' && appointment.status !== 'pending'
+  const canConfirm = appointment.status === 'pending'
+  const canReject = appointment.status === 'pending'
   const canStart = appointment.status === 'confirmed'
   const canComplete = appointment.status === 'in progress'
 
@@ -295,14 +298,25 @@ export function AppointmentDetail({ appointment, onClose, role, onStatusUpdated 
               </div>
 
               {canConfirm && (
-                <Button
-                  onClick={() => updateStatus('confirmed')}
-                  disabled={updating}
-                  className="w-full bg-blue-500 text-white hover:bg-blue-600 rounded-xl"
-                >
-                  <PlayCircle className="h-4 w-4 mr-2" />
-                  {updating ? "Updating..." : "Confirm Appointment"}
-                </Button>
+                <div className="flex gap-2 w-full">
+                  <Button
+                    onClick={() => updateStatus('cancelled')}
+                    disabled={updating}
+                    variant="outline"
+                    className="flex-1 border-red-300 text-red-600 hover:bg-red-50 rounded-xl"
+                  >
+                    <XCircle className="h-4 w-4 mr-2" />
+                    {updating ? "..." : "Reject"}
+                  </Button>
+                  <Button
+                    onClick={() => updateStatus('confirmed')}
+                    disabled={updating}
+                    className="flex-1 bg-blue-500 text-white hover:bg-blue-600 rounded-xl"
+                  >
+                    <PlayCircle className="h-4 w-4 mr-2" />
+                    {updating ? "..." : "Approve"}
+                  </Button>
+                </div>
               )}
 
               {canStart && (
