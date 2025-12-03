@@ -9,6 +9,7 @@ import servicesRoutes from "./routes/services.route"
 import doctorsRoutes from "./routes/doctors.route"
 import appointmentsRoutes from "./routes/appointments.route"
 import datesRoutes from "./routes/dates.route"
+import reportsRoutes from "./routes/reports.route"
 // blog feature temporarily disabled
 
 
@@ -29,6 +30,7 @@ app.use("/api/services", servicesRoutes)
 app.use("/api/doctors", doctorsRoutes)
 app.use("/api/appointments", appointmentsRoutes)
 app.use("/api/dates", datesRoutes)
+app.use("/api/reports", reportsRoutes)
 // app.use("/api/blog", blogRoutes)
 
 

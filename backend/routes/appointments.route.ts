@@ -1,6 +1,7 @@
 import express from 'express'
 import prisma from '../prisma/prismaClient'
 import auth from '../middleware/auth'
+import { sendAppointmentConfirmation } from '../services/email.service'
 
 const router = express.Router()
 
@@ -218,6 +219,24 @@ router.patch('/:id', auth, async (req, res) => {
         data: updateData,
         include: { doctor: true }
       })
+
+      // Send email if status changed to confirmed
+      if (status === 'confirmed' && appointment.status !== 'confirmed') {
+        const time = updated.appointmentDate.toLocaleTimeString('en-US', {
+          hour: 'numeric',
+          minute: '2-digit',
+          hour12: true
+        })
+
+        // Send email asynchronously (don't await to avoid blocking response)
+        sendAppointmentConfirmation(
+          updated.email,
+          updated.name,
+          updated.appointmentDate,
+          time,
+          updated.doctor?.name || 'Assigned Doctor'
+        ).catch(err => console.error('Failed to send confirmation email:', err))
+      }
 
       return res.json({
         id: updated.id,

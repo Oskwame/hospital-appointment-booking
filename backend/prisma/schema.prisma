@@ -57,7 +57,7 @@ model Appointment {
   phone           String
   description     String?
   appointmentDate DateTime @map("appointment_date")
-  status          String   @default("booked")
+  status          String   @default("pending")
   serviceId       Int      @map("service_id")
   doctorId        Int?     @map("doctor_id")
   createdAt       DateTime @default(now()) @map("created_at")
