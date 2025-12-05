@@ -7,16 +7,28 @@ const router = express.Router()
 router.get('/', async (_req, res) => {
   try {
     const services = await prisma.service.findMany({ orderBy: { createdAt: 'desc' } })
-    const payload = services.map((s) => ({
-      id: s.id,
-      name: s.name,
-      description: s.description ?? '',
-      icon: (s as any).icon ?? null,
-      availableDates: (s as any).availableDates ? (s as any).availableDates.map((d: Date) => d.toISOString()) : [],
-      timeSlots: (s as any).timeSlots || [],
-      availableSessions: (s as any).availableSessions || ['morning', 'afternoon', 'evening'],
-      created_at: s.createdAt,
-    }))
+    const today = new Date()
+    today.setHours(0, 0, 0, 0) // Set to start of day
+
+    const payload = services.map((s) => {
+      // Filter out past dates from availableDates
+      const allDates = (s as any).availableDates || []
+      const futureDates = allDates.filter((d: Date) => {
+        const dateObj = new Date(d)
+        return dateObj >= today
+      })
+
+      return {
+        id: s.id,
+        name: s.name,
+        description: s.description ?? '',
+        icon: (s as any).icon ?? null,
+        availableDates: futureDates.map((d: Date) => d.toISOString()),
+        timeSlots: (s as any).timeSlots || [],
+        availableSessions: (s as any).availableSessions || ['morning', 'afternoon', 'evening'],
+        created_at: s.createdAt,
+      }
+    })
     res.json(payload)
   } catch (err) {
     console.error('Fetch services error:', err)
