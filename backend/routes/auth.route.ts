@@ -5,6 +5,7 @@ import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
 import auth from '../middleware/auth'
 import nodemailer from 'nodemailer'
+import { sendOTP } from '../services/email.service'
 
 const otpStore = new Map<string, { code: string; expires: number }>()
 const OTP_TTL_MS = 10 * 60 * 1000
@@ -98,13 +99,11 @@ router.post('/users/request-otp', auth, async (req, res) => {
     const code = String(Math.floor(100000 + Math.random() * 900000))
     otpStore.set(email, { code, expires: Date.now() + OTP_TTL_MS })
 
-    const transporter = createTransport()
-    const from = process.env.SMTP_FROM || process.env.SMTP_USER || 'no-reply@example.com'
-    const body = `Your verification code is ${code}. It expires in 3 minutes.`
-    if (transporter) {
-      await transporter.sendMail({ from, to: email, subject: 'Your OTP Code', text: body })
-    } else {
+    try {
+      await sendOTP(email, code, 10)
+    } catch (emailError) {
       console.log('[DEV] OTP for', email, 'is', code)
+      console.error('Failed to send OTP email:', emailError)
     }
     return res.json({ message: 'OTP sent' })
   } catch (err) {
@@ -290,14 +289,11 @@ router.post('/request-email-change-otp', auth, async (req, res) => {
     const code = String(Math.floor(100000 + Math.random() * 900000))
     otpStore.set(newEmail, { code, expires: Date.now() + OTP_TTL_MS })
 
-    const transporter = createTransport()
-    const from = process.env.SMTP_FROM || process.env.SMTP_USER || 'no-reply@example.com'
-    const body = `Your verification code for email change is ${code}. It expires in 10 minutes.`
-
-    if (transporter) {
-      await transporter.sendMail({ from, to: newEmail, subject: 'Email Change Verification', text: body })
-    } else {
+    try {
+      await sendOTP(newEmail, code, 10)
+    } catch (emailError) {
       console.log('[DEV] Email Change OTP for', newEmail, 'is', code)
+      console.error('Failed to send email change OTP:', emailError)
     }
 
     res.json({ message: 'OTP sent' })
