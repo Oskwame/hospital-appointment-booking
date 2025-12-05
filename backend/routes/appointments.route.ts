@@ -103,6 +103,14 @@ router.post('/', async (req, res) => {
     const when = new Date(iso)
     if (Number.isNaN(when.getTime())) return res.status(400).json({ message: 'Invalid date/time' })
 
+    // Prevent booking past dates
+    const now = new Date()
+    if (when < now) {
+      return res.status(400).json({
+        message: 'Cannot book appointments for past dates. Please select a future date and time.'
+      })
+    }
+
     const desc = description ? String(description) : ''
     const finalDesc = gender ? `${desc}${desc ? ' | ' : ''}gender:${String(gender)}` : desc
 
@@ -217,11 +225,16 @@ router.patch('/:id', auth, async (req, res) => {
       const updated = await prisma.appointment.update({
         where: { id: appointmentId },
         data: updateData,
-        include: { doctor: true }
+        include: { doctor: true, service: true }
       })
 
       // Send email if status changed to confirmed
       if (status === 'confirmed' && appointment.status !== 'confirmed') {
+        console.log('📧 Status changed to confirmed, preparing to send email...')
+        console.log('Previous status:', appointment.status)
+        console.log('New status:', status)
+        console.log('Recipient email:', updated.email)
+
         const time = updated.appointmentDate.toLocaleTimeString('en-US', {
           hour: 'numeric',
           minute: '2-digit',
@@ -234,8 +247,16 @@ router.patch('/:id', auth, async (req, res) => {
           updated.name,
           updated.appointmentDate,
           time,
-          updated.doctor?.name || 'Assigned Doctor'
-        ).catch(err => console.error('Failed to send confirmation email:', err))
+          updated.doctor?.name || 'Assigned Doctor',
+          updated.service?.name || 'General Consultation',
+          updated.id // Add appointment ID
+        ).then(() => {
+          console.log('✅ Email sent successfully to:', updated.email)
+        }).catch(err => {
+          console.error('❌ Failed to send confirmation email:', err)
+        })
+      } else {
+        console.log('ℹ️ Email not triggered. Status:', status, '| Previous:', appointment.status)
       }
 
       return res.json({
