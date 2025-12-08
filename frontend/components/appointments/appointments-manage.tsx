@@ -9,6 +9,8 @@ import { AppointmentForm } from "./appointment-form"
 import { AppointmentDetail } from "@/components/appointments/appointment-details"
 import { useAuth } from "@/lib/auth-context"
 
+import { API_BASE_URL } from "@/lib/api-config"
+
 interface AppointmentRow {
   id: number
   name: string
@@ -29,7 +31,7 @@ export function AppointmentsManager() {
   const [selectedAppointment, setSelectedAppointment] = useState<AppointmentRow | null>(null)
   const [editingId, setEditingId] = useState<number | null>(null)
 
-  const base = useMemo(() => (process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000") + "/api", [])
+  const base = useMemo(() => API_BASE_URL, [])
 
   const reload = useCallback(async () => {
     try {
@@ -147,7 +149,7 @@ export function AppointmentsManager() {
 
       {/* Desktop Table */}
       <div className="overflow-x-auto">
-        <Card className="p-6 bg-white rounded-xl shadow-md border border-slate-200 max-w-7xl mx-auto ">
+        <Card className="p-6 bg-white rounded-xl shadow-md border border-slate-200 max-w-7xl mx-auto overflow-x-auto">
 
           <table className="w-full max-w-7xl border-collapse text-sm sm:table hidden">
             <thead className="bg-slate-50 border-b border-slate-200">

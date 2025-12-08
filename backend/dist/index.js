@@ -13,6 +13,7 @@ const services_route_1 = __importDefault(require("./routes/services.route"));
 const doctors_route_1 = __importDefault(require("./routes/doctors.route"));
 const appointments_route_1 = __importDefault(require("./routes/appointments.route"));
 const dates_route_1 = __importDefault(require("./routes/dates.route"));
+const reports_route_1 = __importDefault(require("./routes/reports.route"));
 // blog feature temporarily disabled
 dotenv_1.default.config();
 const app = (0, express_1.default)();
@@ -28,6 +29,7 @@ app.use("/api/services", services_route_1.default);
 app.use("/api/doctors", doctors_route_1.default);
 app.use("/api/appointments", appointments_route_1.default);
 app.use("/api/dates", dates_route_1.default);
+app.use("/api/reports", reports_route_1.default);
 // app.use("/api/blog", blogRoutes)
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {

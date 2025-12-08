@@ -9,7 +9,8 @@ router.get('/', async (_req, res) => {
   try {
     const appts = await prisma.appointment.findMany({
       include: {
-        doctor: true
+        doctor: true,
+        service: true
       },
       orderBy: { createdAt: 'desc' }
     })
@@ -22,6 +23,7 @@ router.get('/', async (_req, res) => {
       appointment_date: a.appointmentDate.toISOString(),
       status: a.status,
       service_id: a.serviceId,
+      service_name: a.service?.name || 'General',
       doctor_id: a.doctorId,
       doctor_name: a.doctor?.name || null,
       created_at: a.createdAt,

@@ -16,7 +16,7 @@ router.get('/', async (_req, res) => {
             specialization: d.specialization,
             email: d.email,
             phone: d.phone,
-            department: d.department,
+            service: d.service,
             status: d.status,
             created_at: d.createdAt,
         }));
@@ -43,7 +43,7 @@ router.get('/me', auth_1.default, async (req, res) => {
             specialization: doctor.specialization,
             email: doctor.email,
             phone: doctor.phone,
-            department: doctor.department,
+            service: doctor.service,
             status: doctor.status,
             created_at: doctor.createdAt,
         });
@@ -52,14 +52,51 @@ router.get('/me', auth_1.default, async (req, res) => {
         res.status(500).json({ message: 'Server error' });
     }
 });
+router.put('/me', auth_1.default, async (req, res) => {
+    try {
+        const userId = req.userId;
+        if (!userId)
+            return res.status(401).json({ message: 'Unauthorized' });
+        const user = await prismaClient_1.default.user.findUnique({ where: { id: userId } });
+        if (!user)
+            return res.status(404).json({ message: 'User not found' });
+        const { name, specialization, phone, department } = req.body;
+        const doctor = await prismaClient_1.default.doctor.findFirst({ where: { email: user.email } });
+        if (!doctor)
+            return res.status(404).json({ message: 'Doctor profile not found' });
+        const updated = await prismaClient_1.default.doctor.update({
+            where: { id: doctor.id },
+            data: {
+                name: typeof name === 'string' ? name : doctor.name,
+                specialization: typeof specialization === 'string' ? specialization : doctor.specialization,
+                phone: typeof phone === 'string' ? phone : doctor.phone,
+                // schema uses 'service' but UI uses 'department'
+                service: typeof department === 'string' ? department : doctor.service,
+            },
+        });
+        return res.json({
+            id: updated.id,
+            name: updated.name,
+            specialization: updated.specialization,
+            email: updated.email,
+            phone: updated.phone,
+            department: updated.service,
+            status: updated.status,
+            created_at: updated.createdAt,
+        });
+    }
+    catch (err) {
+        res.status(500).json({ message: 'Server error' });
+    }
+});
 router.post('/', async (req, res) => {
     try {
-        const { name, specialization, email, phone, department, status } = req.body;
-        if (!name || !specialization || !email || !phone || !department) {
+        const { name, specialization, email, phone, service, status } = req.body;
+        if (!name || !specialization || !email || !phone || !service) {
             return res.status(400).json({ message: 'Missing required fields' });
         }
         const created = await prismaClient_1.default.doctor.create({
-            data: { name, specialization, email, phone, department, status: status || 'available' },
+            data: { name, specialization, email, phone, service, status: status || 'available' },
         });
         res.status(201).json({
             id: created.id,
@@ -67,7 +104,7 @@ router.post('/', async (req, res) => {
             specialization: created.specialization,
             email: created.email,
             phone: created.phone,
-            department: created.department,
+            service: created.service,
             status: created.status,
             created_at: created.createdAt,
         });
@@ -81,13 +118,13 @@ router.put('/:id', async (req, res) => {
         const id = Number(req.params.id);
         if (!Number.isInteger(id))
             return res.status(400).json({ message: 'Invalid id' });
-        const { name, specialization, email, phone, department, status } = req.body;
-        if (!name || !specialization || !email || !phone || !department) {
+        const { name, specialization, email, phone, service, status } = req.body;
+        if (!name || !specialization || !email || !phone || !service) {
             return res.status(400).json({ message: 'Missing required fields' });
         }
         const updated = await prismaClient_1.default.doctor.update({
             where: { id },
-            data: { name, specialization, email, phone, department, status: status || 'available' },
+            data: { name, specialization, email, phone, service, status: status || 'available' },
         });
         res.json({
             id: updated.id,
@@ -95,7 +132,7 @@ router.put('/:id', async (req, res) => {
             specialization: updated.specialization,
             email: updated.email,
             phone: updated.phone,
-            department: updated.department,
+            service: updated.service,
             status: updated.status,
             created_at: updated.createdAt,
         });

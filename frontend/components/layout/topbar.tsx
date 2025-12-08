@@ -1,6 +1,6 @@
 "use client"
 
-import { Menu, Search, Bell } from "lucide-react"
+import { Search, Bell } from "lucide-react"
 import UserProfile from "@/components/user-profile/UserProfile";
 
 interface TopBarProps {
@@ -28,7 +28,6 @@ export function TopBar({ onMenuClick }: TopBarProps) {
             "
             aria-label="Toggle sidebar"
           >
-            <Menu className="h-5 w-5 text-slate-600" />
           </button>
 
           {/* SEARCH FIELD */}

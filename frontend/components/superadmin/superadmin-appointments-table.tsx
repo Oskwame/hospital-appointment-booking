@@ -4,6 +4,8 @@ import { useEffect, useState } from "react"
 import { Card } from "@/components/ui/card"
 import { MoreVertical, Calendar } from "lucide-react"
 
+import { API_BASE_URL } from "@/lib/api-config"
+
 interface Appointment {
     id: number
     patientName: string
@@ -26,7 +28,7 @@ export function SuperAdminAppointmentsTable() {
 
     const fetchAppointments = async () => {
         try {
-            const base = (process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000") + "/api"
+            const base = API_BASE_URL
             const res = await fetch(`${base}/appointments`, { credentials: "include" })
 
             if (!res.ok) {
@@ -34,18 +36,13 @@ export function SuperAdminAppointmentsTable() {
             }
 
             const data = await res.json()
-            console.log("Fetched appointments data:", data)
-            console.log("Number of appointments:", data.length)
 
             // Sort by appointment_date (descending) and get 10 most recent appointments
             const sorted = data
                 .sort((a: any, b: any) => new Date(b.appointment_date).getTime() - new Date(a.appointment_date).getTime())
                 .slice(0, 10) // Show only 10 most recent
 
-            console.log("Sorted appointments:", sorted)
-
             const mappedAppointments = sorted.map((apt: any) => {
-                console.log("Mapping appointment:", apt)
                 const appointmentDate = new Date(apt.appointment_date)
                 return {
                     id: apt.id,
@@ -67,7 +64,6 @@ export function SuperAdminAppointmentsTable() {
                 }
             })
 
-            console.log("Mapped appointments:", mappedAppointments)
             setAppointments(mappedAppointments)
         } catch (err) {
             console.error("Error fetching appointments:", err)
@@ -118,10 +114,10 @@ export function SuperAdminAppointmentsTable() {
     }
 
     return (
-        <Card className="overflow-hidden shadow-sm">
-            <div className="p-6 border-b border-border bg-gradient-to-r from-purple-50 to-indigo-50">
+        <Card className="overflow-hidden shadow-sm rounded-xl">
+            <div className="p-6 border-b border-slate-300 bg-gradient-to-r from-blue-50 to-indigo-50 ">
                 <div className="flex items-center gap-2">
-                    <Calendar className="h-5 w-5 text-purple-600" />
+                    <Calendar className="h-5 w-5 text-blue-800" />
                     <h3 className="text-lg font-semibold text-foreground">Recent Appointments</h3>
                 </div>
                 <p className="text-sm text-muted-foreground mt-1">
@@ -131,7 +127,7 @@ export function SuperAdminAppointmentsTable() {
 
             <div className="overflow-x-auto">
                 <table className="w-full">
-                    <thead className="bg-muted border-b border-border">
+                    <thead className="bg-slate-50  border-b border-slate-400">
                         <tr>
                             <th className="px-6 py-3 text-left text-sm font-semibold text-foreground">Patient</th>
                             <th className="px-6 py-3 text-left text-sm font-semibold text-foreground">Doctor</th>
@@ -141,7 +137,7 @@ export function SuperAdminAppointmentsTable() {
                             <th className="px-6 py-3 text-left text-sm font-semibold text-foreground">Actions</th>
                         </tr>
                     </thead>
-                    <tbody className="divide-y divide-border bg-white">
+                    <tbody className="divide-y divide-slate-200 bg-white">
                         {appointments.length === 0 ? (
                             <tr>
                                 <td colSpan={6} className="px-6 py-8 text-center text-muted-foreground">

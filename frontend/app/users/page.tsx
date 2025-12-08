@@ -11,6 +11,7 @@ import { AddUserForm } from "@/components/superadmin/adduser-form"
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog"
 import { ViewUserDialog } from "@/components/superadmin/view-user-dialog"
 import { EditUserForm } from "@/components/superadmin/edit-user-form"
+import { API_BASE_URL } from "@/lib/api-config"
 
 interface User {
   id: number
@@ -44,7 +45,7 @@ export default function UsersPage() {
     try {
       setLoading(true)
       setError(null)
-      const base = (process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000") + "/api"
+      const base = API_BASE_URL
       const endpoint = showDeactivated ? `${base}/auth/users/deactivated` : `${base}/auth/users`
       const res = await fetch(endpoint, {
         credentials: "include",
@@ -192,7 +193,7 @@ export default function UsersPage() {
             {!loading && !error && (
               <div className="hidden md:block">
                 <div className="overflow-x-auto">
-                  <Card className="p-6 bg-white rounded-xl shadow-md border border-slate-200">
+                  <Card className="p-6 bg-white rounded-xl shadow-md border border-slate-200 overflow-x-auto">
                     <table className="w-full border-collapse text-sm min-w-[800px]">
                       <thead className="bg-slate-50 border-b border-slate-200">
                         <tr>
@@ -279,8 +280,8 @@ export default function UsersPage() {
                         <p className="text-sm text-slate-500 mt-1">{u.email}</p>
                       </div>
                       <Badge className={`px-3 py-1 rounded-full text-xs font-medium ${u.deletedAt
-                          ? "bg-orange-100 text-orange-700"
-                          : "bg-green-100 text-green-700"
+                        ? "bg-orange-100 text-orange-700"
+                        : "bg-green-100 text-green-700"
                         }`}>
                         {u.deletedAt ? "Deactivated" : "Active"}
                       </Badge>

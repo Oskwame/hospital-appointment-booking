@@ -5,10 +5,18 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
 const prismaClient_1 = __importDefault(require("../prisma/prismaClient"));
+const auth_1 = __importDefault(require("../middleware/auth"));
+const email_service_1 = require("../services/email.service");
 const router = express_1.default.Router();
 router.get('/', async (_req, res) => {
     try {
-        const appts = await prismaClient_1.default.appointment.findMany({ orderBy: { createdAt: 'desc' } });
+        const appts = await prismaClient_1.default.appointment.findMany({
+            include: {
+                doctor: true,
+                service: true
+            },
+            orderBy: { createdAt: 'desc' }
+        });
         const payload = appts.map((a) => ({
             id: a.id,
             name: a.name,
@@ -18,6 +26,48 @@ router.get('/', async (_req, res) => {
             appointment_date: a.appointmentDate.toISOString(),
             status: a.status,
             service_id: a.serviceId,
+            service_name: a.service?.name || 'General',
+            doctor_id: a.doctorId,
+            doctor_name: a.doctor?.name || null,
+            created_at: a.createdAt,
+        }));
+        res.json(payload);
+    }
+    catch (err) {
+        res.status(500).json({ message: 'Server error' });
+    }
+});
+router.get('/me', auth_1.default, async (req, res) => {
+    try {
+        const userId = req.userId;
+        if (!userId)
+            return res.status(401).json({ message: 'Unauthorized' });
+        const user = await prismaClient_1.default.user.findUnique({ where: { id: userId } });
+        if (!user)
+            return res.status(404).json({ message: 'User not found' });
+        // Find doctor by email
+        const doctor = await prismaClient_1.default.doctor.findFirst({ where: { email: user.email } });
+        if (!doctor)
+            return res.status(404).json({ message: 'Doctor profile not found' });
+        // Get only appointments assigned to this doctor
+        const appts = await prismaClient_1.default.appointment.findMany({
+            where: { doctorId: doctor.id },
+            include: {
+                doctor: true
+            },
+            orderBy: { createdAt: 'desc' }
+        });
+        const payload = appts.map((a) => ({
+            id: a.id,
+            name: a.name,
+            email: a.email,
+            phone: a.phone,
+            description: a.description ?? '',
+            appointment_date: a.appointmentDate.toISOString(),
+            status: a.status,
+            service_id: a.serviceId,
+            doctor_id: a.doctorId,
+            doctor_name: a.doctor?.name || null,
             created_at: a.createdAt,
         }));
         res.json(payload);
@@ -28,9 +78,24 @@ router.get('/', async (_req, res) => {
 });
 router.post('/', async (req, res) => {
     try {
-        const { name, email, gender, description, serviceId, date, time } = req.body;
-        if (!name || !email || !serviceId || !date || !time) {
+        const { name, email, gender, description, serviceId, date, session } = req.body;
+        if (!name || !email || !serviceId || !date || !session) {
             return res.status(400).json({ message: 'Missing required fields' });
+        }
+        // Map session to time
+        let time;
+        switch (session.toLowerCase()) {
+            case 'morning':
+                time = '07:00';
+                break;
+            case 'afternoon':
+                time = '11:00';
+                break;
+            case 'evening':
+                time = '15:00';
+                break;
+            default:
+                return res.status(400).json({ message: 'Invalid session. Must be morning, afternoon, or evening' });
         }
         const svcId = Number(serviceId);
         if (!Number.isInteger(svcId))
@@ -38,12 +103,26 @@ router.post('/', async (req, res) => {
         const service = await prismaClient_1.default.service.findUnique({ where: { id: svcId } });
         if (!service)
             return res.status(404).json({ message: 'Service not found' });
-        const iso = `${String(date)}T${String(time)}:00`;
+        const iso = `${String(date)}T${time}:00`;
         const when = new Date(iso);
         if (Number.isNaN(when.getTime()))
             return res.status(400).json({ message: 'Invalid date/time' });
+        // Prevent booking past dates
+        const now = new Date();
+        if (when < now) {
+            return res.status(400).json({
+                message: 'Cannot book appointments for past dates. Please select a future date and time.'
+            });
+        }
         const desc = description ? String(description) : '';
         const finalDesc = gender ? `${desc}${desc ? ' | ' : ''}gender:${String(gender)}` : desc;
+        // Find an available doctor with matching service
+        const availableDoctor = await prismaClient_1.default.doctor.findFirst({
+            where: {
+                service: service.name,
+                status: 'available',
+            },
+        });
         const created = await prismaClient_1.default.appointment.create({
             data: {
                 name: String(name),
@@ -52,6 +131,7 @@ router.post('/', async (req, res) => {
                 description: finalDesc || null,
                 appointmentDate: when,
                 serviceId: svcId,
+                doctorId: availableDoctor?.id || null,
             },
         });
         res.status(201).json({
@@ -63,6 +143,8 @@ router.post('/', async (req, res) => {
             appointment_date: created.appointmentDate.toISOString(),
             status: created.status,
             service_id: created.serviceId,
+            doctor_id: created.doctorId,
+            session: session,
             created_at: created.createdAt,
         });
     }
@@ -70,4 +152,127 @@ router.post('/', async (req, res) => {
         res.status(500).json({ message: 'Server error' });
     }
 });
+// PATCH /api/appointments/:id - Update appointment status (DOCTOR) or reassign (ADMIN)
+router.patch('/:id', auth_1.default, async (req, res) => {
+    try {
+        const userId = req.userId;
+        const userRole = req.userRole;
+        if (!userId)
+            return res.status(401).json({ message: 'Unauthorized' });
+        const appointmentId = parseInt(req.params.id);
+        if (isNaN(appointmentId)) {
+            return res.status(400).json({ message: 'Invalid appointment ID' });
+        }
+        const { status, doctorId } = req.body;
+        // Get user
+        const user = await prismaClient_1.default.user.findUnique({ where: { id: userId } });
+        if (!user)
+            return res.status(404).json({ message: 'User not found' });
+        // Get appointment
+        const appointment = await prismaClient_1.default.appointment.findUnique({
+            where: { id: appointmentId }
+        });
+        if (!appointment) {
+            return res.status(404).json({ message: 'Appointment not found' });
+        }
+        // Logic for DOCTORS: Can only update status of their own appointments
+        if (userRole === 'DOCTOR') {
+            if (!status) {
+                return res.status(400).json({ message: 'Status is required' });
+            }
+            const validStatuses = ['pending', 'confirmed', 'in progress', 'completed', 'cancelled'];
+            if (!validStatuses.includes(status.toLowerCase())) {
+                return res.status(400).json({ message: 'Invalid status value' });
+            }
+            const doctor = await prismaClient_1.default.doctor.findFirst({ where: { email: user.email } });
+            if (!doctor)
+                return res.status(403).json({ message: 'Doctor profile not found' });
+            if (appointment.doctorId !== doctor.id) {
+                return res.status(403).json({ message: 'You can only update your own appointments' });
+            }
+            const updated = await prismaClient_1.default.appointment.update({
+                where: { id: appointmentId },
+                data: { status },
+            });
+            return res.json(formatAppointment(updated));
+        }
+        // Logic for ADMINS/SUPERADMINS: Can reassign doctor and update status
+        if (['ADMIN', 'SUPERADMIN'].includes(userRole)) {
+            const updateData = {};
+            if (status) {
+                const validStatuses = ['pending', 'confirmed', 'in progress', 'completed', 'cancelled'];
+                if (!validStatuses.includes(status.toLowerCase())) {
+                    return res.status(400).json({ message: 'Invalid status value' });
+                }
+                updateData.status = status;
+            }
+            if (doctorId) {
+                const doctor = await prismaClient_1.default.doctor.findUnique({ where: { id: doctorId } });
+                if (!doctor)
+                    return res.status(404).json({ message: 'Doctor not found' });
+                updateData.doctorId = doctorId;
+            }
+            const updated = await prismaClient_1.default.appointment.update({
+                where: { id: appointmentId },
+                data: updateData,
+                include: { doctor: true, service: true }
+            });
+            // Send email if status changed to confirmed
+            if (status === 'confirmed' && appointment.status !== 'confirmed') {
+                console.log('📧 Status changed to confirmed, preparing to send email...');
+                console.log('Previous status:', appointment.status);
+                console.log('New status:', status);
+                console.log('Recipient email:', updated.email);
+                const time = updated.appointmentDate.toLocaleTimeString('en-US', {
+                    hour: 'numeric',
+                    minute: '2-digit',
+                    hour12: true
+                });
+                // Send email asynchronously (don't await to avoid blocking response)
+                (0, email_service_1.sendAppointmentConfirmation)(updated.email, updated.name, updated.appointmentDate, time, updated.doctor?.name || 'Assigned Doctor', updated.service?.name || 'General Consultation', updated.id // Add appointment ID
+                ).then(() => {
+                    console.log('✅ Email sent successfully to:', updated.email);
+                }).catch(err => {
+                    console.error('❌ Failed to send confirmation email:', err);
+                });
+            }
+            else {
+                console.log('ℹ️ Email not triggered. Status:', status, '| Previous:', appointment.status);
+            }
+            return res.json({
+                id: updated.id,
+                name: updated.name,
+                email: updated.email,
+                phone: updated.phone,
+                description: updated.description ?? '',
+                appointment_date: updated.appointmentDate.toISOString(),
+                status: updated.status,
+                service_id: updated.serviceId,
+                doctor_id: updated.doctorId,
+                doctor_name: updated.doctor?.name || null,
+                session: updated.session || null,
+                created_at: updated.createdAt,
+            });
+        }
+        return res.status(403).json({ message: 'Forbidden' });
+    }
+    catch (err) {
+        console.error('Update appointment error:', err);
+        res.status(500).json({ message: 'Server error' });
+    }
+});
+function formatAppointment(a) {
+    return {
+        id: a.id,
+        name: a.name,
+        email: a.email,
+        phone: a.phone,
+        description: a.description ?? '',
+        appointment_date: a.appointmentDate.toISOString(),
+        status: a.status,
+        service_id: a.serviceId,
+        doctor_id: a.doctorId,
+        created_at: a.createdAt,
+    };
+}
 exports.default = router;

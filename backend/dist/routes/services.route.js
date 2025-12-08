@@ -10,15 +10,26 @@ const router = express_1.default.Router();
 router.get('/', async (_req, res) => {
     try {
         const services = await prismaClient_1.default.service.findMany({ orderBy: { createdAt: 'desc' } });
-        const payload = services.map((s) => ({
-            id: s.id,
-            name: s.name,
-            description: s.description ?? '',
-            icon: s.icon ?? null,
-            availableDates: s.availableDates ? s.availableDates.map((d) => d.toISOString()) : [],
-            timeSlots: s.timeSlots || [],
-            created_at: s.createdAt,
-        }));
+        const today = new Date();
+        today.setHours(0, 0, 0, 0); // Set to start of day
+        const payload = services.map((s) => {
+            // Filter out past dates from availableDates
+            const allDates = s.availableDates || [];
+            const futureDates = allDates.filter((d) => {
+                const dateObj = new Date(d);
+                return dateObj >= today;
+            });
+            return {
+                id: s.id,
+                name: s.name,
+                description: s.description ?? '',
+                icon: s.icon ?? null,
+                availableDates: futureDates.map((d) => d.toISOString()),
+                timeSlots: s.timeSlots || [],
+                availableSessions: s.availableSessions || ['morning', 'afternoon', 'evening'],
+                created_at: s.createdAt,
+            };
+        });
         res.json(payload);
     }
     catch (err) {
@@ -29,14 +40,26 @@ router.get('/', async (_req, res) => {
 // POST /api/services
 router.post('/', async (req, res) => {
     try {
-        const { name, description, icon, availableDates, timeSlots } = req.body;
+        const { name, description, icon, availableDates, timeSlots, availableSessions } = req.body;
         if (!name || !description)
             return res.status(400).json({ message: 'Name and description are required' });
+        // Validate availableSessions
+        const validSessions = ['morning', 'afternoon', 'evening'];
+        const sessions = Array.isArray(availableSessions)
+            ? availableSessions.filter(s => validSessions.includes(s))
+            : ['morning', 'afternoon', 'evening'];
         const dates = Array.isArray(availableDates)
             ? availableDates.map((d) => new Date(d)).filter((d) => !isNaN(d.getTime()))
             : [];
         const created = await prismaClient_1.default.service.create({
-            data: { name, description, icon: icon || null, availableDates: dates, timeSlots: Array.isArray(timeSlots) ? timeSlots : [] },
+            data: {
+                name,
+                description,
+                icon: icon || null,
+                availableDates: dates,
+                timeSlots: Array.isArray(timeSlots) ? timeSlots : [],
+                availableSessions: sessions
+            },
         });
         res.status(201).json({
             id: created.id,
@@ -45,6 +68,7 @@ router.post('/', async (req, res) => {
             icon: created.icon ?? null,
             availableDates: created.availableDates ? created.availableDates.map((d) => d.toISOString()) : [],
             timeSlots: created.timeSlots || [],
+            availableSessions: created.availableSessions || ['morning', 'afternoon', 'evening'],
             created_at: created.createdAt,
         });
     }
@@ -59,15 +83,27 @@ router.put('/:id', async (req, res) => {
         const id = Number(req.params.id);
         if (!Number.isInteger(id))
             return res.status(400).json({ message: 'Invalid id' });
-        const { name, description, icon, availableDates, timeSlots } = req.body;
+        const { name, description, icon, availableDates, timeSlots, availableSessions } = req.body;
         if (!name || !description)
             return res.status(400).json({ message: 'Name and description are required' });
+        // Validate availableSessions
+        const validSessions = ['morning', 'afternoon', 'evening'];
+        const sessions = Array.isArray(availableSessions)
+            ? availableSessions.filter(s => validSessions.includes(s))
+            : ['morning', 'afternoon', 'evening'];
         const dates = Array.isArray(availableDates)
             ? availableDates.map((d) => new Date(d)).filter((d) => !isNaN(d.getTime()))
             : [];
         const updated = await prismaClient_1.default.service.update({
             where: { id },
-            data: { name, description, icon: icon || null, availableDates: dates, timeSlots: Array.isArray(timeSlots) ? timeSlots : [] },
+            data: {
+                name,
+                description,
+                icon: icon || null,
+                availableDates: dates,
+                timeSlots: Array.isArray(timeSlots) ? timeSlots : [],
+                availableSessions: sessions
+            },
         });
         res.json({
             id: updated.id,
@@ -76,6 +112,7 @@ router.put('/:id', async (req, res) => {
             icon: updated.icon ?? null,
             availableDates: updated.availableDates ? updated.availableDates.map((d) => d.toISOString()) : [],
             timeSlots: updated.timeSlots || [],
+            availableSessions: updated.availableSessions || ['morning', 'afternoon', 'evening'],
             created_at: updated.createdAt,
         });
     }

@@ -120,7 +120,7 @@ export function ReportsAnalytics() {
     <div className="space-y-6">
       {/* Date Range Picker */}
       <Card className="p-4">
-        <div className="flex gap-4 items-center">
+        <div className=" grid md:flex gap-4 items-center">
           <label className="text-sm font-medium text-gray-700">From:</label>
           <input
             type="date"

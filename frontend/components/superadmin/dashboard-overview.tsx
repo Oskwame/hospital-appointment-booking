@@ -10,6 +10,9 @@ import {
 } from "lucide-react"
 import { SuperAdminAppointmentsTable } from "@/components/superadmin/superadmin-appointments-table"
 
+import { API_BASE_URL } from "@/lib/api-config"
+import { AppointmentsCalendar } from "../admin/appointments-calender"
+
 interface Metrics {
     totalAppointments: number
     pendingAppointments: number
@@ -19,7 +22,7 @@ interface Metrics {
     doctorsTrend: number
 }
 
-export function OverviewTab() {
+export function DashboardOverview() {
     const [metrics, setMetrics] = useState<Metrics>({
         totalAppointments: 0,
         pendingAppointments: 0,
@@ -36,7 +39,7 @@ export function OverviewTab() {
 
     const fetchMetrics = async () => {
         try {
-            const base = (process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000") + "/api"
+            const base = API_BASE_URL
 
             // Fetch appointments
             const appointmentsRes = await fetch(`${base}/appointments`, { credentials: "include" })
@@ -113,7 +116,7 @@ export function OverviewTab() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 {[...Array(4)].map((_, i) => (
                     <Card key={i} className="p-6 animate-pulse">
-                        <div className="h-24 bg-gray-200 rounded" />
+                        <div className="h-24 bg-gray-200 rounded-lg" />
                     </Card>
                 ))}
             </div>
@@ -123,15 +126,15 @@ export function OverviewTab() {
     return (
         <div className="space-y-6">
             {/* Metrics Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 ">
                 {metricCards.map((card, index) => (
-                    <Card key={index} className="p-6 hover:shadow-lg transition-shadow">
+                    <Card key={index} className="p-6 hover:shadow-lg transition-shadow rounded-xl">
                         <div className="flex items-start justify-between">
                             <div>
                                 <p className="text-sm font-medium text-muted-foreground">{card.title}</p>
                                 <h3 className="text-3xl font-bold mt-2">{card.value}</h3>
                                 {card.trend !== undefined && (
-                                    <div className="flex items-center mt-2 text-sm">
+                                    <div className="flex items-center mt-2 text-sm ">
                                         {card.trend > 0 ? (
                                             <>
                                                 <TrendingUp className="h-4 w-4 text-green-600 mr-1" />
@@ -154,10 +157,11 @@ export function OverviewTab() {
                     </Card>
                 ))}
             </div>
+            <AppointmentsCalendar />
 
             {/* Appointments Table and Quick Actions Sidebar */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <div className="lg:col-span-2">
+                <div className="lg:col-span-2 rounded-xl">
                     <SuperAdminAppointmentsTable />
                 </div>
 

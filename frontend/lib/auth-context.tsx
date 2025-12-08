@@ -1,5 +1,6 @@
 "use client"
 import { createContext, useContext, useEffect, useState } from "react"
+import { API_BASE_URL } from "./api-config"
 
 type Role = "admin" | "superadmin" | "doctor"
 
@@ -17,7 +18,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const fetchMe = async () => {
       try {
-        const base = (process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000") + "/api"
+        const base = API_BASE_URL
         const res = await fetch(`${base}/auth/me`, { credentials: "include" })
         if (res.ok) {
           const data = await res.json()
