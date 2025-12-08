@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState, useCallback } from "react"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Plus, Edit, Trash2, Eye } from "lucide-react"
+import { Plus, Edit, Trash2, Eye, CalendarClock, History } from "lucide-react"
 import { AppointmentForm } from "./appointment-form"
 import { AppointmentDetail } from "@/components/appointments/appointment-details"
 import { useAuth } from "@/lib/auth-context"
@@ -23,6 +23,8 @@ interface AppointmentRow {
   doctorName?: string
 }
 
+type TabType = "upcoming" | "previous"
+
 export function AppointmentsManager() {
   const { role } = useAuth()
   const [appointments, setAppointments] = useState<AppointmentRow[]>([])
@@ -30,6 +32,7 @@ export function AppointmentsManager() {
   const [showForm, setShowForm] = useState(false)
   const [selectedAppointment, setSelectedAppointment] = useState<AppointmentRow | null>(null)
   const [editingId, setEditingId] = useState<number | null>(null)
+  const [activeTab, setActiveTab] = useState<TabType>("upcoming")
 
   const base = useMemo(() => API_BASE_URL, [])
 
@@ -82,6 +85,30 @@ export function AppointmentsManager() {
     Promise.resolve().then(reload)
   }, [reload])
 
+  // Filter appointments by upcoming or previous
+  const filteredAppointments = useMemo(() => {
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+
+    return appointments.filter(apt => {
+      const aptDate = new Date(apt.date)
+      aptDate.setHours(0, 0, 0, 0)
+
+      if (activeTab === "upcoming") {
+        return aptDate >= today
+      } else {
+        return aptDate < today
+      }
+    }).sort((a, b) => {
+      const dateA = new Date(a.date + 'T' + a.time)
+      const dateB = new Date(b.date + 'T' + b.time)
+      // Upcoming: earliest first, Previous: most recent first
+      return activeTab === "upcoming"
+        ? dateA.getTime() - dateB.getTime()
+        : dateB.getTime() - dateA.getTime()
+    })
+  }, [appointments, activeTab])
+
   const statusColors = {
     scheduled: "bg-blue-100 text-blue-800",
     completed: "bg-green-100 text-green-800",
@@ -103,24 +130,74 @@ export function AppointmentsManager() {
   const canEdit = role !== "doctor"
   const canDelete = role !== "doctor"
 
+  // Count for tabs
+  const upcomingCount = useMemo(() => {
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    return appointments.filter(apt => new Date(apt.date) >= today).length
+  }, [appointments])
+
+  const previousCount = useMemo(() => {
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    return appointments.filter(apt => new Date(apt.date) < today).length
+  }, [appointments])
+
   return (
     <div className="overflow-x-auto gap-2 space-y-6">
 
-      {/* Header */}
-      <div className="flex justify-between items-center">
-        <h3 className="text-lg font-semibold text-foreground">
-          {role === "doctor" ? "My Appointments" : "All Appointments"}
+      {/* Header with Title and New Appointment Button */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <h3 className="text-xl font-bold text-foreground">
+          {role === "doctor" ? "My Appointments" : "Appointments"}
         </h3>
 
         {canCreateAppointment && (
           <Button
             onClick={() => setShowForm(!showForm)}
-            className="gap-2 shadow-md bg-blue-100 h-11 border-gray-400 rounded-xl"
+            className="gap-2 shadow-md bg-blue-600 hover:bg-blue-700 text-white h-11 rounded-xl"
           >
-            <Plus className="rounded-xl h-5 bg-blue-500 text-white" />
+            <Plus className="h-5 w-5" />
             New Appointment
           </Button>
         )}
+      </div>
+
+      {/* Tabs */}
+      <div className="flex gap-2 border-b border-gray-200">
+        <button
+          onClick={() => setActiveTab("upcoming")}
+          className={`flex items-center gap-2 px-4 py-3 text-sm font-medium transition-all border-b-2 -mb-px ${activeTab === "upcoming"
+            ? "border-blue-600 text-blue-600 bg-blue-50"
+            : "border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50"
+            }`}
+        >
+          <CalendarClock className="h-4 w-4" />
+          <span>Upcoming</span>
+          <span className={`ml-1 px-2 py-0.5 rounded-full text-xs font-semibold ${activeTab === "upcoming"
+            ? "bg-blue-600 text-white"
+            : "bg-gray-200 text-gray-600"
+            }`}>
+            {upcomingCount}
+          </span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab("previous")}
+          className={`flex items-center gap-2 px-4 py-3 text-sm font-medium transition-all border-b-2 -mb-px ${activeTab === "previous"
+            ? "border-blue-600 text-blue-600 bg-blue-50"
+            : "border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50"
+            }`}
+        >
+          <History className="h-4 w-4" />
+          <span>Previous</span>
+          <span className={`ml-1 px-2 py-0.5 rounded-full text-xs font-semibold ${activeTab === "previous"
+            ? "bg-blue-600 text-white"
+            : "bg-gray-200 text-gray-600"
+            }`}>
+            {previousCount}
+          </span>
+        </button>
       </div>
 
       {/* Form */}
@@ -165,19 +242,100 @@ export function AppointmentsManager() {
             </thead>
 
             <tbody className="divide-y divide-slate-100">
-              {appointments.map((appointment) => (
-                <tr key={appointment.id} className="hover:bg-slate-50 transition-colors">
-                  <td className="py-4 px-4 text-slate-700">{appointment.name}</td>
-                  <td className="py-4 px-4 text-slate-700">{appointment.email}</td>
-                  <td className="py-4 px-4 text-slate-700">{appointment.serviceName}</td>
-                  <td className="py-4 px-4 text-slate-700">
-                    {appointment.date} - {getSessionFromTime(appointment.time)}
+              {filteredAppointments.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className="py-12 text-center text-gray-500">
+                    <div className="flex flex-col items-center gap-2">
+                      {activeTab === "upcoming" ? (
+                        <CalendarClock className="h-12 w-12 text-gray-300" />
+                      ) : (
+                        <History className="h-12 w-12 text-gray-300" />
+                      )}
+                      <p className="font-medium">No {activeTab} appointments</p>
+                      <p className="text-sm">Appointments will appear here</p>
+                    </div>
                   </td>
-                  <td className="py-4 px-4 text-slate-700 max-w-xs truncate">
-                    {appointment.description}
-                  </td>
+                </tr>
+              ) : (
+                filteredAppointments.map((appointment) => (
+                  <tr key={appointment.id} className="hover:bg-slate-50 transition-colors">
+                    <td className="py-4 px-4 text-slate-700">{appointment.name}</td>
+                    <td className="py-4 px-4 text-slate-700">{appointment.email}</td>
+                    <td className="py-4 px-4 text-slate-700">{appointment.serviceName}</td>
+                    <td className="py-4 px-4 text-slate-700">
+                      {appointment.date} - {getSessionFromTime(appointment.time)}
+                    </td>
+                    <td className="py-4 px-4 text-slate-700 max-w-xs truncate">
+                      {appointment.description}
+                    </td>
 
-                  <td className="py-4 px-4">
+                    <td className="py-4 px-4">
+                      <Badge
+                        className={`px-3 py-1 rounded-full text-xs font-medium ${statusColors[appointment.status as keyof typeof statusColors] ||
+                          "bg-blue-100 text-blue-700"
+                          }`}
+                      >
+                        {appointment.status}
+                      </Badge>
+                    </td>
+
+                    <td className="py-4 px-2 flex items-center gap-2">
+                      <button
+                        onClick={() => setSelectedAppointment(appointment)}
+                        className="p-2 rounded-xl bg-blue-50 text-blue-600 hover:bg-blue-100"
+                      >
+                        <Eye className="h-4 w-4" />
+                      </button>
+
+                      {canEdit && (
+                        <button
+                          onClick={() => {
+                            setEditingId(appointment.id)
+                            setShowForm(true)
+                          }}
+                          className="p-2 rounded-xl bg-amber-50 text-amber-600 hover:bg-amber-100"
+                        >
+                          <Edit className="h-4 w-4" />
+                        </button>
+                      )}
+
+                      {canDelete && (
+                        <button
+                          onClick={() => handleDelete(String(appointment.id))}
+                          className="p-2 rounded-xl bg-red-50 text-red-600 hover:bg-red-100"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+
+          {/* Mobile Cards */}
+          <div className="sm:hidden space-y-4">
+            {filteredAppointments.length === 0 ? (
+              <div className="py-12 text-center text-gray-500">
+                <div className="flex flex-col items-center gap-2">
+                  {activeTab === "upcoming" ? (
+                    <CalendarClock className="h-12 w-12 text-gray-300" />
+                  ) : (
+                    <History className="h-12 w-12 text-gray-300" />
+                  )}
+                  <p className="font-medium">No {activeTab} appointments</p>
+                  <p className="text-sm">Appointments will appear here</p>
+                </div>
+              </div>
+            ) : (
+              filteredAppointments.map((appointment) => (
+                <div
+                  key={appointment.id}
+                  className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm"
+                >
+                  <div className="flex justify-between mb-3">
+                    <h4 className="font-semibold text-slate-700">{appointment.name}</h4>
                     <Badge
                       className={`px-3 py-1 rounded-full text-xs font-medium ${statusColors[appointment.status as keyof typeof statusColors] ||
                         "bg-blue-100 text-blue-700"
@@ -185,12 +343,29 @@ export function AppointmentsManager() {
                     >
                       {appointment.status}
                     </Badge>
-                  </td>
+                  </div>
 
-                  <td className="py-4 px-2 flex items-center gap-2">
+                  <p className="text-sm text-slate-500">
+                    <span className="font-medium text-slate-600">Service:</span>{" "}
+                    {appointment.serviceName}
+                  </p>
+
+                  <p className="text-sm text-slate-500">
+                    <span className="font-medium text-slate-600">Date:</span>{" "}
+                    {appointment.date} - {getSessionFromTime(appointment.time)}
+                  </p>
+
+                  {appointment.description && (
+                    <p className="text-sm text-slate-500 mt-1">
+                      <span className="font-medium text-slate-600">Notes:</span>{" "}
+                      {appointment.description}
+                    </p>
+                  )}
+
+                  <div className="flex gap-3 mt-4">
                     <button
                       onClick={() => setSelectedAppointment(appointment)}
-                      className="p-2 rounded-xl bg-blue-50 text-blue-600 hover:bg-blue-100"
+                      className="p-2 rounded-md bg-blue-50 text-blue-600 hover:bg-blue-100"
                     >
                       <Eye className="h-4 w-4" />
                     </button>
@@ -201,7 +376,7 @@ export function AppointmentsManager() {
                           setEditingId(appointment.id)
                           setShowForm(true)
                         }}
-                        className="p-2 rounded-xl bg-amber-50 text-amber-600 hover:bg-amber-100"
+                        className="p-2 rounded-md bg-amber-50 text-amber-600 hover:bg-amber-100"
                       >
                         <Edit className="h-4 w-4" />
                       </button>
@@ -210,83 +385,15 @@ export function AppointmentsManager() {
                     {canDelete && (
                       <button
                         onClick={() => handleDelete(String(appointment.id))}
-                        className="p-2 rounded-xl bg-red-50 text-red-600 hover:bg-red-100"
+                        className="p-2 rounded-md bg-red-50 text-red-600 hover:bg-red-100"
                       >
                         <Trash2 className="h-4 w-4" />
                       </button>
                     )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-
-          {/* Mobile Cards */}
-          <div className="sm:hidden space-y-4">
-            {appointments.map((appointment) => (
-              <div
-                key={appointment.id}
-                className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm"
-              >
-                <div className="flex justify-between mb-3">
-                  <h4 className="font-semibold text-slate-700">{appointment.name}</h4>
-                  <Badge
-                    className={`px-3 py-1 rounded-full text-xs font-medium ${statusColors[appointment.status as keyof typeof statusColors] ||
-                      "bg-blue-100 text-blue-700"
-                      }`}
-                  >
-                    {appointment.status}
-                  </Badge>
+                  </div>
                 </div>
-
-                <p className="text-sm text-slate-500">
-                  <span className="font-medium text-slate-600">Service:</span>{" "}
-                  {appointment.serviceName}
-                </p>
-
-                <p className="text-sm text-slate-500">
-                  <span className="font-medium text-slate-600">Date:</span>{" "}
-                  {appointment.date} - {getSessionFromTime(appointment.time)}
-                </p>
-
-                {appointment.description && (
-                  <p className="text-sm text-slate-500 mt-1">
-                    <span className="font-medium text-slate-600">Notes:</span>{" "}
-                    {appointment.description}
-                  </p>
-                )}
-
-                <div className="flex gap-3 mt-4">
-                  <button
-                    onClick={() => setSelectedAppointment(appointment)}
-                    className="p-2 rounded-md bg-blue-50 text-blue-600 hover:bg-blue-100"
-                  >
-                    <Eye className="h-4 w-4" />
-                  </button>
-
-                  {canEdit && (
-                    <button
-                      onClick={() => {
-                        setEditingId(appointment.id)
-                        setShowForm(true)
-                      }}
-                      className="p-2 rounded-md bg-amber-50 text-amber-600 hover:bg-amber-100"
-                    >
-                      <Edit className="h-4 w-4" />
-                    </button>
-                  )}
-
-                  {canDelete && (
-                    <button
-                      onClick={() => handleDelete(String(appointment.id))}
-                      className="p-2 rounded-md bg-red-50 text-red-600 hover:bg-red-100"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
-                  )}
-                </div>
-              </div>
-            ))}
+              ))
+            )}
           </div>
 
         </Card>
