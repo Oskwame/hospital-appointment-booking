@@ -2,44 +2,32 @@
 import { TopBar } from "@/components/layout/topbar"
 import { Sidebar } from "@/components/layout/sidebar"
 import { useState } from "react"
-import { MetricsCards } from "@/components/admin/metrics-card"
-import { AppointmentsTable } from "../admin/appointment-table"
-import {AppointmentsCalendar} from "@/components/admin/appointments-calender"  
+import { AdminDashboardOverview } from "@/components/admin/admin-dashboard-overview"
 
-export function AdminDashboard () {
-    const [sidebarOpen, setSidebarOpen] = useState(true)
+export function AdminDashboard() {
+  const [sidebarOpen, setSidebarOpen] = useState(true)
 
-     return (
+  return (
     <div className="flex h-screen overflow-hidden bg-background">
       <Sidebar open={sidebarOpen} onToggle={() => setSidebarOpen(!sidebarOpen)} />
       <div className="flex-1 flex flex-col overflow-hidden">
         <TopBar onMenuClick={() => setSidebarOpen(!sidebarOpen)} />
-        <main className="flex-1 overflow-auto">
-          <div className="p-6 max-w-7xl mx-auto space-y-6">
-            {/* Page Title */}
-            <div>
-              <h2 className="text-3xl font-bold text-foreground">Admin Dashboard</h2>
-              <p className="text-muted-foreground mt-1">Welcome back! Here&#39;s your hospital overview.</p>
+        <main className="flex-1 overflow-auto bg-slate-50">
+          <div className="p-6 max-w-[1600px] mx-auto space-y-6">
+            {/* Modern Page Header with Gradient */}
+            <div className="bg-gradient-to-r from-emerald-500 to-teal-500 rounded-2xl p-8 shadow-lg">
+              <h2 className="text-3xl font-bold text-white">Admin Dashboard</h2>
+              <p className="text-emerald-100 mt-2">
+                Welcome back! Here&apos;s your hospital overview at a glance.
+              </p>
             </div>
 
-            {/* Metrics */}
-            <MetricsCards />
-
-            {/* Main Content Grid */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              {/* Calendar and Table */}
-              <div className="lg:col-span-2 space-y-6">
-                <AppointmentsCalendar />
-                <AppointmentsTable />
-              </div>
-
-              {/* Right Sidebar */}
-              <div className="space-y-6">
-              </div>
-            </div>
+            {/* Dashboard Content */}
+            <AdminDashboardOverview />
           </div>
         </main>
       </div>
     </div>
   )
 }
+

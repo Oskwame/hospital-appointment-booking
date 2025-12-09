@@ -42,14 +42,6 @@ model Service {
   @@map("services")
 }
 
-model AvailableDate {
-  id              Int      @id @default(autoincrement())
-  appointmentDate DateTime @map("appointment_date")
-  isAvailable     Boolean  @default(true) @map("is_available")
-
-  @@map("available_dates")
-}
-
 model Appointment {
   id              Int      @id @default(autoincrement())
   name            String
@@ -61,8 +53,10 @@ model Appointment {
   serviceId       Int      @map("service_id")
   doctorId        Int?     @map("doctor_id")
   createdAt       DateTime @default(now()) @map("created_at")
-  service         Service  @relation(fields: [serviceId], references: [id])
-  doctor          Doctor?  @relation(fields: [doctorId], references: [id])
+  
+  // Foreign keys with proper onDelete behavior
+  service         Service  @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  doctor          Doctor?  @relation(fields: [doctorId], references: [id], onDelete: SetNull)
 
   @@map("appointment")
 }
@@ -75,6 +69,9 @@ model User {
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
   deletedAt DateTime?
+  
+  // Back-reference to Doctor (one User can have one Doctor profile)
+  doctor    Doctor?
 }
 
 enum AdminRole {
@@ -84,15 +81,21 @@ enum AdminRole {
 }
 
 model Doctor {
-  id           Int           @id @default(autoincrement())
-  name         String
+  id             Int           @id @default(autoincrement())
+  name           String
   specialization String
-  email        String
-  phone        String
-  service      String
-  status       String        @default("available")
-  createdAt    DateTime      @default(now()) @map("created_at")
-  appointments Appointment[]
+  email          String
+  phone          String
+  service        String
+  status         String        @default("available")
+  createdAt      DateTime      @default(now()) @map("created_at")
+  
+  // Foreign key linking Doctor to User account
+  userId         Int?          @unique @map("user_id")
+  user           User?         @relation(fields: [userId], references: [id], onDelete: SetNull)
+  
+  appointments   Appointment[]
 
   @@map("doctors")
 }
+

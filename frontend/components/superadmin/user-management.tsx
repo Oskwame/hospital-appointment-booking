@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useCallback } from "react"
 import { Plus, Trash2, Edit2, RotateCcw } from "lucide-react"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -19,7 +19,7 @@ export function UserManagement() {
   const [open, setOpen] = useState(false)
   const [showDeactivated, setShowDeactivated] = useState(false)
 
-  const reload = async () => {
+  const reload = useCallback(async () => {
     try {
       const base = (process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000") + "/api"
       const endpoint = showDeactivated ? `${base}/auth/users/deactivated` : `${base}/auth/users`
@@ -37,11 +37,12 @@ export function UserManagement() {
         )
       }
     } catch (e) { }
-  }
+  }, [showDeactivated])
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     reload()
-  }, [showDeactivated])
+  }, [reload])
 
   const handleDeactivateUser = async (userId: number) => {
     if (!confirm("Are you sure you want to deactivate this user? They will no longer be able to log in.")) return
@@ -115,8 +116,8 @@ export function UserManagement() {
                   {user.role}
                 </Badge>
                 <Badge className={`px-3 py-1 rounded-full text-xs font-medium ${user.status === "Active"
-                    ? "bg-green-100 text-green-700"
-                    : "bg-orange-100 text-orange-700"
+                  ? "bg-green-100 text-green-700"
+                  : "bg-orange-100 text-orange-700"
                   }`}>
                   {user.status}
                 </Badge>
@@ -151,8 +152,8 @@ export function UserManagement() {
         <button
           onClick={() => setShowDeactivated(!showDeactivated)}
           className={`px-4 py-2 text-sm rounded-md transition-colors shadow-sm ${showDeactivated
-              ? "bg-orange-100 text-orange-700 hover:bg-orange-200"
-              : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+            ? "bg-orange-100 text-orange-700 hover:bg-orange-200"
+            : "bg-gray-100 text-gray-700 hover:bg-gray-200"
             }`}
         >
           {showDeactivated ? "Show Active Users" : "Show Deactivated Users"}

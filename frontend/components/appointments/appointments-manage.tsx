@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState, useCallback } from "react"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Plus, Edit, Trash2, Eye, CalendarClock, History } from "lucide-react"
+import { Plus, Edit, Trash2, Eye, CalendarClock, History, Search, X } from "lucide-react"
 import { AppointmentForm } from "./appointment-form"
 import { AppointmentDetail } from "@/components/appointments/appointment-details"
 import { useAuth } from "@/lib/auth-context"
@@ -33,6 +33,7 @@ export function AppointmentsManager() {
   const [selectedAppointment, setSelectedAppointment] = useState<AppointmentRow | null>(null)
   const [editingId, setEditingId] = useState<number | null>(null)
   const [activeTab, setActiveTab] = useState<TabType>("upcoming")
+  const [searchQuery, setSearchQuery] = useState("")
 
   const base = useMemo(() => API_BASE_URL, [])
 
@@ -85,20 +86,30 @@ export function AppointmentsManager() {
     Promise.resolve().then(reload)
   }, [reload])
 
-  // Filter appointments by upcoming or previous
+  // Filter appointments by upcoming or previous and search query
   const filteredAppointments = useMemo(() => {
     const today = new Date()
     today.setHours(0, 0, 0, 0)
+    const query = searchQuery.toLowerCase().trim()
 
     return appointments.filter(apt => {
       const aptDate = new Date(apt.date)
       aptDate.setHours(0, 0, 0, 0)
 
-      if (activeTab === "upcoming") {
-        return aptDate >= today
-      } else {
-        return aptDate < today
-      }
+      // Tab filter
+      const matchesTab = activeTab === "upcoming" ? aptDate >= today : aptDate < today
+
+      // Search filter
+      const matchesSearch = query === "" ||
+        apt.name.toLowerCase().includes(query) ||
+        apt.email.toLowerCase().includes(query) ||
+        apt.serviceName.toLowerCase().includes(query) ||
+        apt.status.toLowerCase().includes(query) ||
+        apt.description.toLowerCase().includes(query) ||
+        (apt.doctorName?.toLowerCase().includes(query) ?? false) ||
+        apt.date.includes(query)
+
+      return matchesTab && matchesSearch
     }).sort((a, b) => {
       const dateA = new Date(a.date + 'T' + a.time)
       const dateB = new Date(b.date + 'T' + b.time)
@@ -107,7 +118,7 @@ export function AppointmentsManager() {
         ? dateA.getTime() - dateB.getTime()
         : dateB.getTime() - dateA.getTime()
     })
-  }, [appointments, activeTab])
+  }, [appointments, activeTab, searchQuery])
 
   const statusColors = {
     scheduled: "bg-blue-100 text-blue-800",
@@ -162,6 +173,36 @@ export function AppointmentsManager() {
           </Button>
         )}
       </div>
+
+      {/* Search Bar */}
+      <div className="relative">
+        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+          <Search className="h-5 w-5 text-gray-400" />
+        </div>
+        <input
+          type="text"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          placeholder="Search by patient name, email, service, doctor, or date..."
+          className="w-full pl-10 pr-10 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all bg-white shadow-sm"
+        />
+        {searchQuery && (
+          <button
+            onClick={() => setSearchQuery("")}
+            className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
+          >
+            <X className="h-5 w-5" />
+          </button>
+        )}
+      </div>
+
+      {/* Search Results Count */}
+      {searchQuery && (
+        <p className="text-sm text-gray-500">
+          Found <span className="font-semibold text-gray-700">{filteredAppointments.length}</span>
+          {filteredAppointments.length === 1 ? " result" : " results"} for &quot;{searchQuery}&quot;
+        </p>
+      )}
 
       {/* Tabs */}
       <div className="flex gap-2 border-b border-gray-200">

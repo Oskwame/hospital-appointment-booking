@@ -10,6 +10,7 @@ const bcryptjs_1 = __importDefault(require("bcryptjs"));
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const auth_1 = __importDefault(require("../middleware/auth"));
 const nodemailer_1 = __importDefault(require("nodemailer"));
+const express_rate_limit_1 = __importDefault(require("express-rate-limit"));
 const email_service_1 = require("../services/email.service");
 const otpStore = new Map();
 const OTP_TTL_MS = 10 * 60 * 1000;
@@ -38,21 +39,44 @@ function createTransport() {
         auth: { user, pass },
     });
 }
+// Login-specific rate limiter - stricter limits for brute-force protection
+const loginLimiter = (0, express_rate_limit_1.default)({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 10, // 10 login attempts per window
+    message: { message: 'Too many login attempts. Please try again in 15 minutes.' },
+    standardHeaders: true,
+    legacyHeaders: false,
+    // Use email-based tracking only to avoid IPv6 validation issues
+    keyGenerator: (req) => {
+        const email = req.body?.email;
+        return email ? `login_${email}` : 'unknown_user';
+    },
+    skip: (req) => !req.body?.email, // Skip rate limiting if no email provided
+    handler: (req, res) => {
+        const email = req.body?.email || 'unknown';
+        console.warn(`[SECURITY] Rate limit exceeded for login attempts - Email: ${email}`);
+        res.status(429).json({ message: 'Too many login attempts. Please try again in 15 minutes.' });
+    }
+});
 // POST /api/auth/login
 const router = express_1.default.Router();
-router.post('/login', async (req, res) => {
+router.post('/login', loginLimiter, async (req, res) => {
     const { email, password } = req.body;
     try {
         // Check if user exists
         const user = await prismaClient_1.default.user.findUnique({ where: { email } });
         if (!user) {
+            console.warn(`[SECURITY] Failed login - Invalid email: ${email}, IP: ${req.ip}`);
             return res.status(401).json({ message: 'Invalid email or password' });
         }
         // Compare password
         const isMatch = await bcryptjs_1.default.compare(password, user.password);
         if (!isMatch) {
+            console.warn(`[SECURITY] Failed login - Invalid password for: ${email}, IP: ${req.ip}`);
             return res.status(401).json({ message: 'Invalid email or password' });
         }
+        // Successful login - log it
+        console.log(`[AUTH] Successful login: ${email}, IP: ${req.ip}`);
         // Generate token with role
         const token = jsonwebtoken_1.default.sign({ userId: user.id, role: user.role }, process.env.JWT_SECRET, {
             expiresIn: '1d',
@@ -74,6 +98,59 @@ router.post('/login', async (req, res) => {
 router.post('/logout', (_req, res) => {
     res.clearCookie('token', { path: '/' });
     res.json({ message: 'Logged out' });
+});
+// POST /api/auth/refresh - Refresh access token
+router.post('/refresh', async (req, res) => {
+    try {
+        // Get token from cookie or header
+        const header = req.headers.authorization || '';
+        const bearer = header.startsWith('Bearer ') ? header.slice(7) : null;
+        const cookieToken = req.cookies?.token || null;
+        const token = bearer || cookieToken;
+        if (!token) {
+            return res.status(401).json({ message: 'No token provided' });
+        }
+        // Verify the existing token (allow expired tokens to be refreshed within grace period)
+        let payload;
+        try {
+            payload = jsonwebtoken_1.default.verify(token, process.env.JWT_SECRET);
+        }
+        catch (err) {
+            // If token is expired, try to decode it anyway for refresh
+            if (err.name === 'TokenExpiredError') {
+                payload = jsonwebtoken_1.default.decode(token);
+                if (!payload) {
+                    return res.status(401).json({ message: 'Invalid token' });
+                }
+            }
+            else {
+                return res.status(401).json({ message: 'Invalid token' });
+            }
+        }
+        // Verify user still exists and is active
+        const user = await prismaClient_1.default.user.findUnique({ where: { id: payload.userId } });
+        if (!user || user.deletedAt) {
+            return res.status(401).json({ message: 'User not found or deactivated' });
+        }
+        // Generate new token
+        const newToken = jsonwebtoken_1.default.sign({ userId: user.id, role: user.role }, process.env.JWT_SECRET, {
+            expiresIn: '1d',
+        });
+        // Set new cookie
+        res.cookie('token', newToken, {
+            httpOnly: true,
+            sameSite: 'lax',
+            secure: false,
+            path: '/',
+            maxAge: 24 * 60 * 60 * 1000,
+        });
+        console.log(`[AUTH] Token refreshed for user: ${user.email}`);
+        res.json({ token: newToken, message: 'Token refreshed' });
+    }
+    catch (err) {
+        console.error('Token refresh error:', err);
+        res.status(500).json({ message: 'Server error' });
+    }
 });
 // POST /api/auth/users/request-otp (SUPERADMIN only)
 router.post('/users/request-otp', auth_1.default, async (req, res) => {

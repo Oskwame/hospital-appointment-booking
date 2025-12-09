@@ -29,33 +29,6 @@ export function TopBar({ onMenuClick }: TopBarProps) {
             aria-label="Toggle sidebar"
           >
           </button>
-
-          {/* SEARCH FIELD */}
-          <div className="hidden md:flex flex-1 max-w-md">
-            <div className="relative w-full">
-              <Search className="
-                absolute left-3 top-1/2 -translate-y-1/2 
-                h-4 w-4 text-slate-400
-              " />
-
-              <input
-                type="text"
-                placeholder="Search patients, appointments..."
-                className="
-                  w-full pl-10 pr-4 py-2.5
-                  bg-slate-100/60
-                  rounded-xl
-                  border border-slate-200
-                  text-slate-700
-                  placeholder-slate-400
-                  focus:outline-none 
-                  focus:ring-2 focus:ring-blue-400/50
-                  focus:bg-white
-                  transition
-                "
-              />
-            </div>
-          </div>
         </div>
 
         {/* RIGHT SECTION */}
