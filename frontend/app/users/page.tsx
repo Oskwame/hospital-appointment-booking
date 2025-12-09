@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { useAuth } from "@/lib/auth-context"
 import { Sidebar } from "@/components/layout/sidebar"
 import { TopBar } from "@/components/layout/topbar"
@@ -36,12 +36,7 @@ export default function UsersPage() {
   const [deleteUser, setDeleteUser] = useState<User | null>(null)
   const [deleting, setDeleting] = useState(false)
 
-  // Fetch users from API
-  useEffect(() => {
-    fetchUsers()
-  }, [showDeactivated])
-
-  const fetchUsers = async () => {
+  const fetchUsers = useCallback(async () => {
     try {
       setLoading(true)
       setError(null)
@@ -63,7 +58,12 @@ export default function UsersPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [showDeactivated])
+
+  // Fetch users from API
+  useEffect(() => {
+    fetchUsers()
+  }, [fetchUsers])
 
   const handleDelete = async () => {
     if (!deleteUser) return

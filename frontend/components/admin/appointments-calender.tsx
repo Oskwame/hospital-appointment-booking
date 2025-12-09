@@ -42,7 +42,8 @@ interface Appointment {
 }
 
 export function AppointmentsCalendar() {
-  const today = new Date()
+  // Stabilize 'today' so it doesn't trigger re-renders or invalid useMemo deps
+  const today = useMemo(() => new Date(), [])
   const [currentMonth, setCurrentMonth] = useState(today.getMonth())
   const [currentYear, setCurrentYear] = useState(today.getFullYear())
   const [currentWeekIndex, setCurrentWeekIndex] = useState(0)
