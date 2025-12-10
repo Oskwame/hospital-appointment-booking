@@ -13,7 +13,7 @@ export function ProtectedLayout() {
   useEffect(() => {
     const fetchMe = async () => {
       try {
-        const base = process.env.NEXT_PUBLIC_API_BASE_URL + "/api"
+        const base = (process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000") + "/api"
         const res = await fetch(`${base}/auth/me`, { credentials: "include" })
         if (res.ok) {
           const data = await res.json()

@@ -27,7 +27,7 @@ const ViewPost = () => {
   useEffect(() => {
     const fetchPostsAndCategories = async () => {
       try {
-        const base = process.env.NEXT_PUBLIC_API_BASE_URL + "/api"
+        const base = (process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000") + "/api"
         const res = await fetch(`${base}/posts`);
         const postsData: Post[] = await res.json();
         setPosts(postsData || []);
@@ -59,7 +59,7 @@ const ViewPost = () => {
     if (!selectedPostId) return;
 
     try {
-      const base = process.env.NEXT_PUBLIC_API_BASE_URL + "/api"
+      const base = (process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000") + "/api"
       const res = await fetch(`${base}/posts/${selectedPostId}`, {
         method: "DELETE",
       });
@@ -103,11 +103,10 @@ const ViewPost = () => {
             <button
               key={category}
               onClick={() => setActiveCategory(category)}
-              className={`px-4 py-2 text-sm rounded-lg font-medium transition ${
-                activeCategory === category
+              className={`px-4 py-2 text-sm rounded-lg font-medium transition ${activeCategory === category
                   ? "bg-blue-500 text-white"
                   : "bg-gray-300 hover:bg-gray-400"
-              }`}
+                }`}
             >
               {category}
             </button>
