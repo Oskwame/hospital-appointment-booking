@@ -70,7 +70,7 @@ export function Sidebar({ open: defaultOpen, role: roleProp }: SidebarProps) {
         <div className="p-2 border-b flex items-center justify-between bg-gradient-to-r from-blue-20 to-blue-100">
           <div className="flex items-center gap-3">
             <div className="h-14 w-14 rounded-xl flex items-center justify-center">
-              <Image src="/kasahospital logo.png" alt="Logo" width={120} height={120} />
+              <Image src="/kasahospital-logo.png" alt="Logo" width={120} height={120} />
             </div>
             {(!desktopCollapsed || mobileOpen) && (
               <span className="font-bold text-gray-700 text-sm tracking-wide">Kasa Family Hospital</span>

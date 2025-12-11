@@ -59,7 +59,7 @@ export default function Login() {
           className="card p-8 w-full max-w-md"
         >
           <div className="flex flex-col items-center">
-            <Image src="/kasahospital logo.png" alt="Logo" width={70} height={70} />
+            <Image src="/kasahospital-logo.png" alt="Logo" width={70} height={70} />
             <h2 className="text-lg font-semibold text-slate-800">
               Admin Login
             </h2>
