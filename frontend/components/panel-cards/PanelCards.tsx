@@ -15,8 +15,8 @@ const ServiceCards: React.FC = () => {
 
     const fetchStats = async () => {
       try {
-        // 🔥 Point to your Node backend
-        const res = await fetch("http://localhost:5000/api/stats", { cache: "no-store" });
+        const base = (process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000") + "/api"
+        const res = await fetch(`${base}/stats`, { cache: "no-store" });
         const data = await res.json();
 
         setStats({
