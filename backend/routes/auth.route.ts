@@ -95,8 +95,8 @@ router.post('/login', loginLimiter, async (req, res) => {
 
     res.cookie('token', token, {
       httpOnly: true,
-      sameSite: 'lax',
-      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'none',
+      secure: true,
       path: '/',
       maxAge: 24 * 60 * 60 * 1000,
     })
@@ -156,8 +156,8 @@ router.post('/refresh', async (req, res) => {
     // Set new cookie
     res.cookie('token', newToken, {
       httpOnly: true,
-      sameSite: 'lax',
-      secure: false,
+      sameSite: 'none',
+      secure: true,
       path: '/',
       maxAge: 24 * 60 * 60 * 1000,
     })

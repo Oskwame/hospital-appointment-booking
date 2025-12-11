@@ -31,23 +31,15 @@ const limiter = rateLimit({
 app.use(limiter)
 
 // Dynamic CORS
-const allowedOrigins = ["http://localhost:3000", "http://localhost:3001"]
-if (process.env.CLIENT_URL) {
-  allowedOrigins.push(process.env.CLIENT_URL)
-}
+const allowedOrigins = [
+  "http://localhost:3000",
+  "https://hospital-appointment-front-production.up.railway.app"
+];
 
 app.use(cors({
-  origin: (origin, callback) => {
-    // Allow requests with no origin (like mobile apps or curl requests)
-    if (!origin) return callback(null, true);
-    if (allowedOrigins.indexOf(origin) === -1) {
-      const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
-      return callback(new Error(msg), false);
-    }
-    return callback(null, true);
-  },
+  origin: allowedOrigins,
   credentials: true
-}))
+}));
 app.use(cookieParser())
 app.use(express.json())
 
