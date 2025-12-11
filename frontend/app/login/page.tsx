@@ -6,6 +6,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { FaUser, FaLock, FaEyeSlash, FaEye } from "react-icons/fa";
+import { API_BASE_URL } from "@/lib/api-config";
 export const dynamic = "force-dynamic";
 
 export default function Login() {
@@ -25,8 +26,7 @@ export default function Login() {
     setLoading(true);
 
     try {
-      const base = (process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000") + "/api"
-      const res = await fetch(`${base}/auth/login`, {
+      const res = await fetch(`${API_BASE_URL}/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include", // 👉 if your backend sets a cookie

@@ -70,7 +70,7 @@ export default function UsersPage() {
 
     try {
       setDeleting(true)
-      const base = (process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000") + "/api"
+      const base = API_BASE_URL
       const res = await fetch(`${base}/auth/users/${deleteUser.id}`, {
         method: "DELETE",
         credentials: "include",
@@ -94,7 +94,7 @@ export default function UsersPage() {
 
   const handleReactivate = async (userId: number) => {
     try {
-      const base = (process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000") + "/api"
+      const base = API_BASE_URL
       const res = await fetch(`${base}/auth/users/${userId}/restore`, {
         method: "PATCH",
         credentials: "include",
