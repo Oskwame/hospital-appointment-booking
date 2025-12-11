@@ -32,14 +32,23 @@ app.use(limiter)
 
 // Dynamic CORS
 const allowedOrigins = [
-  "http://localhost:3000",
-  "https://hospital-appointment-front-production.up.railway.app"
+  'http://localhost:3000',
+  'http://localhost:3001',
+  'https://hospital-appointment-front-production.up.railway.app'
 ];
 
 app.use(cors({
-  origin: allowedOrigins,
+  origin: (origin, callback) => {
+    if (!origin) return callback(null, true);
+    if (!allowedOrigins.includes(origin)) {
+      return callback(new Error('CORS not allowed from this origin'), false);
+    }
+    return callback(null, true);
+  },
   credentials: true
 }));
+
+
 app.use(cookieParser())
 app.use(express.json())
 
