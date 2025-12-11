@@ -15,6 +15,7 @@ import {
   ResponsiveContainer,
 } from 'recharts'
 import { Calendar, CheckCircle, Users, BarChart3, Clock, UserPlus, TrendingDown } from 'lucide-react'
+import { API_BASE_URL, getAuthHeaders } from "@/lib/api-config"
 
 interface OverviewMetrics {
   totalAppointments: number
@@ -75,7 +76,7 @@ export function ReportsAnalytics() {
   const [newPatients, setNewPatients] = useState<NewPatient[]>([])
   const [loading, setLoading] = useState(true)
 
-  const base = (process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000") + "/api"
+  const base = API_BASE_URL
 
   useEffect(() => {
     fetchAllData()
@@ -87,12 +88,12 @@ export function ReportsAnalytics() {
 
     try {
       const [overviewRes, servicesRes, workloadRes, cancellationsRes, peakRes, patientsRes] = await Promise.all([
-        fetch(`${base}/reports/overview?${params}`, { credentials: "include" }),
-        fetch(`${base}/reports/appointments-by-service?${params}`, { credentials: "include" }),
-        fetch(`${base}/reports/doctor-workload?${params}`, { credentials: "include" }),
-        fetch(`${base}/reports/cancellations?${params}`, { credentials: "include" }),
-        fetch(`${base}/reports/peak-hours?${params}`, { credentials: "include" }),
-        fetch(`${base}/reports/new-patients`, { credentials: "include" })
+        fetch(`${base}/reports/overview?${params}`, { headers: getAuthHeaders() }),
+        fetch(`${base}/reports/appointments-by-service?${params}`, { headers: getAuthHeaders() }),
+        fetch(`${base}/reports/doctor-workload?${params}`, { headers: getAuthHeaders() }),
+        fetch(`${base}/reports/cancellations?${params}`, { headers: getAuthHeaders() }),
+        fetch(`${base}/reports/peak-hours?${params}`, { headers: getAuthHeaders() }),
+        fetch(`${base}/reports/new-patients`, { headers: getAuthHeaders() })
       ])
 
       if (overviewRes.ok) setOverview(await overviewRes.json())

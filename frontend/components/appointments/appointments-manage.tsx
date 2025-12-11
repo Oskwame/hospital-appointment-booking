@@ -9,7 +9,7 @@ import { AppointmentForm } from "./appointment-form"
 import { AppointmentDetail } from "@/components/appointments/appointment-details"
 import { useAuth } from "@/lib/auth-context"
 
-import { API_BASE_URL } from "@/lib/api-config"
+import { API_BASE_URL, getAuthHeaders } from "@/lib/api-config"
 
 interface AppointmentRow {
   id: number
@@ -44,8 +44,8 @@ export function AppointmentsManager() {
       const appointmentsEndpoint = r === 'doctor' ? `${base}/appointments/me` : `${base}/appointments`
 
       const [servicesRes, apptRes] = await Promise.all([
-        fetch(`${base}/services`, { credentials: "include" }),
-        fetch(appointmentsEndpoint, { credentials: "include" }),
+        fetch(`${base}/services`, { headers: getAuthHeaders() }),
+        fetch(appointmentsEndpoint, { headers: getAuthHeaders() }),
       ])
       const servicesData = await servicesRes.json()
       const apptsData = await apptRes.json()

@@ -1,36 +1,20 @@
-
 "use client"
-import { useEffect, useState } from "react"
+import { useEffect } from "react"
+import { useRouter } from "next/navigation"
 import { AdminDashboard } from "./dashboards/admin-dashboard"
 import { SuperAdminDashboard } from "./dashboards/super-admin-dashboard"
 import { DoctorDashboard } from "@/components/dashboards/doctor-dashboard"
+import { useAuth } from "@/lib/auth-context"
 
 export function ProtectedLayout() {
-  const [loading, setLoading] = useState(true)
-  const [user, setUser] = useState<any>(null)
-  const [role, setRole] = useState<"admin" | "superadmin" | "doctor" | null>(null)
+  const { user, role, loading } = useAuth()
+  const router = useRouter()
 
   useEffect(() => {
-    const fetchMe = async () => {
-      try {
-        const base = (process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000") + "/api"
-        const res = await fetch(`${base}/auth/me`, { credentials: "include" })
-        if (res.ok) {
-          const data = await res.json()
-          setUser(data)
-          const r = String(data.role || "ADMIN").toLowerCase() as any
-          setRole(r === "doctor" ? "doctor" : r === "superadmin" ? "superadmin" : "admin")
-        } else {
-          setRole("admin")
-        }
-      } catch {
-        setRole("admin")
-      } finally {
-        setLoading(false)
-      }
+    if (!loading && !user) {
+      router.push("/login")
     }
-    fetchMe()
-  }, [])
+  }, [loading, user, router])
 
   if (loading) {
     return (
@@ -46,7 +30,7 @@ export function ProtectedLayout() {
   }
 
   if (!user || !role) {
-    return <AdminDashboard />
+    return null
   }
 
   // Render appropriate dashboard based on role

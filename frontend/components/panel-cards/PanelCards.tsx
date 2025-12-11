@@ -1,5 +1,6 @@
 "use client";
 import React, { useEffect, useState } from "react";
+import { API_BASE_URL, getAuthHeaders } from "@/lib/api-config"
 
 const ServiceCards: React.FC = () => {
   const [stats, setStats] = useState({
@@ -15,8 +16,8 @@ const ServiceCards: React.FC = () => {
 
     const fetchStats = async () => {
       try {
-        const base = (process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000") + "/api"
-        const res = await fetch(`${base}/stats`, { cache: "no-store" });
+        const base = API_BASE_URL
+        const res = await fetch(`${base}/stats`, { cache: "no-store", headers: getAuthHeaders() });
         const data = await res.json();
 
         setStats({

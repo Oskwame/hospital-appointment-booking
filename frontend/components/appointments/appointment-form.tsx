@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select"
 import { X } from "lucide-react"
+import { API_BASE_URL, getAuthHeaders } from "@/lib/api-config"
 
 interface AppointmentFormProps {
   appointment?: any
@@ -28,8 +29,8 @@ export function AppointmentForm({ appointment, onClose, onCreated }: Appointment
   useEffect(() => {
     const run = async () => {
       try {
-        const base = (process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000") + "/api"
-        const res = await fetch(`${base}/services`, { credentials: "include" })
+        const base = API_BASE_URL
+        const res = await fetch(`${base}/services`, { headers: getAuthHeaders() })
         const data = await res.json()
         setServices(
           (data as any[]).map((s) => ({
@@ -53,11 +54,10 @@ export function AppointmentForm({ appointment, onClose, onCreated }: Appointment
     e.preventDefault()
     if (!canSubmit) return
     try {
-      const base = (process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000") + "/api"
+      const base = API_BASE_URL
       const res = await fetch(`${base}/appointments`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
+        headers: { "Content-Type": "application/json", ...getAuthHeaders() },
         body: JSON.stringify({ name, email, gender, description, serviceId, date, session }),
       })
       const created = await res.json()

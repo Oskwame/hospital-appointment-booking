@@ -8,36 +8,32 @@ interface AuthState {
   user: any | null
   role: Role | null
   loading: boolean
+  login: (token: string) => void
+  logout: () => void
 }
 
-const AuthContext = createContext<AuthState>({ user: null, role: null, loading: true })
+const AuthContext = createContext<AuthState>({ user: null, role: null, loading: true, login: () => { }, logout: () => { } })
 
 // Token refresh interval (20 hours - before 24h expiration)
 const REFRESH_INTERVAL = 20 * 60 * 60 * 1000
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [state, setState] = useState<AuthState>({ user: null, role: null, loading: true })
-
-  const refreshToken = useCallback(async () => {
-    try {
-      const res = await fetch(`${API_BASE_URL}/auth/refresh`, {
-        method: "POST",
-        credentials: "include",
-      })
-      if (res.ok) {
-        console.log("[AUTH] Token refreshed successfully")
-        return true
-      }
-      return false
-    } catch {
-      return false
-    }
-  }, [])
+  const [state, setState] = useState<Omit<AuthState, "login" | "logout">>({ user: null, role: null, loading: true })
 
   const fetchMe = useCallback(async () => {
     try {
+      const token = localStorage.getItem("token")
+      if (!token) {
+        setState({ user: null, role: null, loading: false })
+        return false
+      }
+
       const base = API_BASE_URL
-      const res = await fetch(`${base}/auth/me`, { credentials: "include" })
+      const res = await fetch(`${base}/auth/me`, {
+        headers: {
+          "Authorization": `Bearer ${token}`
+        }
+      })
       if (res.ok) {
         const data = await res.json()
         const r = String(data.role || "ADMIN").toLowerCase()
@@ -50,6 +46,41 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     } catch {
       setState({ user: null, role: null, loading: false })
+      return false
+    }
+  }, [])
+
+  const login = useCallback(async (token: string) => {
+    localStorage.setItem("token", token)
+    await fetchMe()
+  }, [fetchMe])
+
+  const logout = useCallback(() => {
+    localStorage.removeItem("token")
+    setState({ user: null, role: null, loading: false })
+  }, [])
+
+  const refreshToken = useCallback(async () => {
+    try {
+      const token = localStorage.getItem("token")
+      if (!token) return false
+
+      const res = await fetch(`${API_BASE_URL}/auth/refresh`, {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${token}`
+        }
+      })
+      if (res.ok) {
+        const data = await res.json()
+        if (data.token) {
+          localStorage.setItem("token", data.token)
+        }
+        console.log("[AUTH] Token refreshed successfully")
+        return true
+      }
+      return false
+    } catch {
       return false
     }
   }, [])
@@ -75,7 +106,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => clearInterval(intervalId)
   }, [state.user, refreshToken, fetchMe])
 
-  return <AuthContext.Provider value={state}>{children}</AuthContext.Provider>
+  return <AuthContext.Provider value={{ ...state, login, logout }}>{children}</AuthContext.Provider>
 }
 
 export function useAuth() {

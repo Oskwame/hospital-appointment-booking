@@ -93,13 +93,8 @@ router.post('/login', loginLimiter, async (req, res) => {
       expiresIn: '1d',
     })
 
-    res.cookie('token', token, {
-      httpOnly: true,
-      sameSite: 'none',
-      secure: true,
-      path: '/',
-      maxAge: 24 * 60 * 60 * 1000,
-    })
+    // Cookie setting removed for header-based auth
+
 
     res.json({ token })
   } catch (err) {
@@ -109,7 +104,8 @@ router.post('/login', loginLimiter, async (req, res) => {
 })
 
 router.post('/logout', (_req, res) => {
-  res.clearCookie('token', { path: '/' })
+  // No need to clear cookie in stateless auth
+
   res.json({ message: 'Logged out' })
 })
 
@@ -154,13 +150,8 @@ router.post('/refresh', async (req, res) => {
     })
 
     // Set new cookie
-    res.cookie('token', newToken, {
-      httpOnly: true,
-      sameSite: 'none',
-      secure: true,
-      path: '/',
-      maxAge: 24 * 60 * 60 * 1000,
-    })
+    // Cookie setting removed for header-based auth
+
 
     console.log(`[AUTH] Token refreshed for user: ${user.email}`)
     res.json({ token: newToken, message: 'Token refreshed' })

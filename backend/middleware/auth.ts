@@ -11,10 +11,10 @@ export default function auth(req: Request, res: Response, next: NextFunction) {
   }
   try {
     const payload = jwt.verify(token, process.env.JWT_SECRET as string) as { userId: number; role: string }
-    ;(req as any).userId = payload.userId
-    ;(req as any).userRole = payload.role
+      ; (req as any).userId = payload.userId
+      ; (req as any).userRole = payload.role
     next()
-  } catch {
+  } catch (err) {
     return res.status(401).json({ message: "Unauthorized" })
   }
 }

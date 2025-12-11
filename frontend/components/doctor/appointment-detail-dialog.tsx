@@ -4,6 +4,7 @@ import { X, User, Mail, Phone, Calendar, Clock, FileText, CheckCircle, PlayCircl
 import { useState } from "react"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
+import { API_BASE_URL, getAuthHeaders } from "@/lib/api-config"
 
 interface Appointment {
     id: number
@@ -55,11 +56,10 @@ export function AppointmentDetailDialog({
         setError(null)
         setUpdating(true)
         try {
-            const base = (process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000") + "/api"
+            const base = API_BASE_URL
             const res = await fetch(`${base}/appointments/${appointment.id}`, {
                 method: "PATCH",
-                headers: { "Content-Type": "application/json" },
-                credentials: "include",
+                headers: { "Content-Type": "application/json", ...getAuthHeaders() },
                 body: JSON.stringify({ status: newStatus }),
             })
 

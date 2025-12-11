@@ -7,6 +7,7 @@ import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@
 import { Button } from "@/components/ui/button"
 import { X } from "lucide-react"
 import { FaEye, FaEyeSlash } from "react-icons/fa"
+import { API_BASE_URL, getAuthHeaders } from "@/lib/api-config"
 
 type RoleOpt = "admin" | "doctor"
 
@@ -27,7 +28,7 @@ interface EditUserFormProps {
 export function EditUserForm({ open, onOpenChange, user, onUpdated }: EditUserFormProps) {
     const [email, setEmail] = useState("")
     const [password, setPassword] = useState("")
-    const [showPassword, setShowPassword]= useState(false);
+    const [showPassword, setShowPassword] = useState(false);
     const [role, setRole] = useState<RoleOpt>("admin")
     const [saving, setSaving] = useState(false)
     const [error, setError] = useState<string | null>(null)
@@ -48,11 +49,9 @@ export function EditUserForm({ open, onOpenChange, user, onUpdated }: EditUserFo
         setError(null)
         setSaving(true)
         try {
-            const base = (process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000") + "/api"
-            const res = await fetch(`${base}/auth/users/${user.id}`, {
+            const res = await fetch(`${API_BASE_URL}/auth/users/${user.id}`, {
                 method: "PATCH",
-                headers: { "Content-Type": "application/json" },
-                credentials: "include",
+                headers: { "Content-Type": "application/json", ...getAuthHeaders() },
                 body: JSON.stringify({ email, password, role: role.toUpperCase() }),
             })
             if (!res.ok) {
@@ -120,24 +119,24 @@ export function EditUserForm({ open, onOpenChange, user, onUpdated }: EditUserFo
                         </div>
                     </div>
 
-            <div>
-                 <label className="block text-sm font-medium text-gray-600 mb-1">New Password</label>
-                    <div className="relative">
-                        <Input
-                            type={showPassword ? "text" : "password"}
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            placeholder="At least 8 characters"
-                            className="w-full rounded-lg border border-gray-300 focus:border-blue-500 focus:ring focus:ring-blue-200 transition pr-10"
-                        />
-                <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-600 hover:text-slate-800 focus:outline-none rounded" >
-                    {showPassword ? <FaEyeSlash /> : <FaEye />}
-                </button>
-            </div>
-        </div>
+                    <div>
+                        <label className="block text-sm font-medium text-gray-600 mb-1">New Password</label>
+                        <div className="relative">
+                            <Input
+                                type={showPassword ? "text" : "password"}
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                placeholder="At least 8 characters"
+                                className="w-full rounded-lg border border-gray-300 focus:border-blue-500 focus:ring focus:ring-blue-200 transition pr-10"
+                            />
+                            <button
+                                type="button"
+                                onClick={() => setShowPassword(!showPassword)}
+                                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-600 hover:text-slate-800 focus:outline-none rounded" >
+                                {showPassword ? <FaEyeSlash /> : <FaEye />}
+                            </button>
+                        </div>
+                    </div>
 
                     {/* Error */}
                     {error && (

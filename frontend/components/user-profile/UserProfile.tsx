@@ -3,6 +3,9 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { User as UserIcon, LogOut, Settings, Phone } from "lucide-react";
+import { API_BASE_URL, getAuthHeaders } from "@/lib/api-config";
+
+import { useAuth } from "@/lib/auth-context";
 
 interface UserProfileProps {
   user: {
@@ -16,19 +19,18 @@ const UserProfile = ({ user: initialUser }: UserProfileProps) => {
   const [doctorData, setDoctorData] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+  const { logout } = useAuth(); // Use global logout
 
   const fetchDoctorProfile = async () => {
     try {
       setLoading(true);
-      const base = (process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000") + "/api";
-
       // First check role via auth/me if we don't know it
-      const authRes = await fetch(`${base}/auth/me`, { credentials: "include" });
+      const authRes = await fetch(`${API_BASE_URL}/auth/me`, { headers: getAuthHeaders() });
       if (authRes.ok) {
         const authData = await authRes.json();
         if (authData.role === 'DOCTOR') {
           // Fetch doctor details
-          const docRes = await fetch(`${base}/doctors/me`, { credentials: "include" });
+          const docRes = await fetch(`${API_BASE_URL}/doctors/me`, { headers: getAuthHeaders() });
           if (docRes.ok) {
             const docData = await docRes.json();
             setDoctorData(docData);
@@ -52,15 +54,18 @@ const UserProfile = ({ user: initialUser }: UserProfileProps) => {
 
   const handleLogout = async () => {
     try {
-      const base = (process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000") + "/api"
-      await fetch(`${base}/auth/logout`, {
+      await fetch(`${API_BASE_URL}/auth/logout`, {
         method: "POST",
-        credentials: "include",
+        headers: getAuthHeaders(),
       });
-
+      // Clear global auth state
+      logout();
       router.push("/login");
     } catch (error) {
       console.error("Logout failed:", error);
+      // Force logout anyway
+      logout();
+      router.push("/login");
     }
   };
 
@@ -113,7 +118,7 @@ const UserProfile = ({ user: initialUser }: UserProfileProps) => {
                 </div>
                 <div className="mt-3 flex items-center gap-2">
                   <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${doctorData.status === 'available' ? 'bg-green-100 text-green-700' :
-                      doctorData.status === 'busy' ? 'bg-yellow-100 text-yellow-700' : 'bg-gray-100 text-gray-700'
+                    doctorData.status === 'busy' ? 'bg-yellow-100 text-yellow-700' : 'bg-gray-100 text-gray-700'
                     }`}>
                     {doctorData.status}
                   </span>

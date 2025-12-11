@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { Plus, Phone, Mail } from "lucide-react"
+import { API_BASE_URL, getAuthHeaders } from "@/lib/api-config"
 
 interface Doctor {
   id: number
@@ -45,10 +46,10 @@ export function DoctorsManager() {
   useEffect(() => {
     const run = async () => {
       try {
-        const base = (process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000") + "/api"
+        const base = API_BASE_URL
         const [doctorsRes, servicesRes] = await Promise.all([
-          fetch(`${base}/doctors`, { credentials: "include" }),
-          fetch(`${base}/services`, { credentials: "include" })
+          fetch(`${base}/doctors`, { headers: getAuthHeaders() }),
+          fetch(`${base}/services`, { headers: getAuthHeaders() })
         ])
         const doctorsData = await doctorsRes.json()
         const servicesData = await servicesRes.json()
@@ -96,11 +97,10 @@ export function DoctorsManager() {
   const submit = async () => {
     if (!form.name || !form.specialization || !form.email || !form.phone || !form.service) return
     try {
-      const base = (process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000") + "/api"
+      const base = API_BASE_URL
       const res = await fetch(`${base}/doctors`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
+        headers: { "Content-Type": "application/json", ...getAuthHeaders() },
         body: JSON.stringify(form),
       })
       const created = await res.json()
@@ -391,11 +391,10 @@ export function DoctorsManager() {
                         if (!edit || !selected) return
                         try {
                           setSaving(true)
-                          const base = (process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000") + "/api"
+                          const base = API_BASE_URL
                           const res = await fetch(`${base}/doctors/${selected.id}`, {
                             method: "PUT",
-                            headers: { "Content-Type": "application/json" },
-                            credentials: "include",
+                            headers: { "Content-Type": "application/json", ...getAuthHeaders() },
                             body: JSON.stringify(edit),
                           })
                           const updated = await res.json()

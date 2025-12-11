@@ -6,6 +6,7 @@ import { useEffect, useState } from "react"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { useAuth } from "@/lib/auth-context"
+import { API_BASE_URL, getAuthHeaders } from "@/lib/api-config"
 
 export function SystemSettings() {
   const { role } = useAuth()
@@ -24,12 +25,12 @@ export function SystemSettings() {
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    const base = (process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000") + "/api"
+    const base = API_BASE_URL
     const fetchAll = async () => {
       try {
         const [prefsRes, hospRes] = await Promise.all([
-          fetch(`${base}/auth/preferences`, { credentials: 'include' }),
-          r === 'superadmin' ? fetch(`${base}/auth/hospital`, { credentials: 'include' }) : Promise.resolve(null as any),
+          fetch(`${base}/auth/preferences`, { headers: getAuthHeaders() }),
+          r === 'superadmin' ? fetch(`${base}/auth/hospital`, { headers: getAuthHeaders() }) : Promise.resolve(null as any),
         ])
         if (prefsRes?.ok) {
           const prefs = await prefsRes.json()
@@ -55,11 +56,10 @@ export function SystemSettings() {
   const savePreferences = async () => {
     setError(null)
     try {
-      const base = (process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000") + "/api"
+      const base = API_BASE_URL
       await fetch(`${base}/auth/preferences`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
+        headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
         body: JSON.stringify({ autoApproval: settings.autoApproval, emailNotifications: settings.emailNotifications }),
       })
       setSaved(true)
@@ -72,11 +72,10 @@ export function SystemSettings() {
   const saveHospital = async () => {
     setError(null)
     try {
-      const base = (process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000") + "/api"
+      const base = API_BASE_URL
       await fetch(`${base}/auth/hospital`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
+        headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
         body: JSON.stringify({
           hospitalName: settings.hospitalName,
           email: settings.email,

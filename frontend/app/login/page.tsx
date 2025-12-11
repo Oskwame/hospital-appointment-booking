@@ -6,6 +6,8 @@ import { API_BASE_URL } from "@/lib/api-config";
 import { FaUser, FaLock, FaEye, FaEyeSlash } from "react-icons/fa";
 import Image from "next/image";
 
+import { useAuth } from "@/lib/auth-context";
+
 export const dynamic = "force-dynamic";
 
 export default function Login() {
@@ -14,6 +16,7 @@ export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+  const { login } = useAuth(); // Use useAuth hook
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) =>
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -28,8 +31,6 @@ export default function Login() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),
-        credentials: "include", // crucial for cookies
-        mode: "cors",            // ensures cross-origin request works
       });
 
       const data = await res.json();
@@ -40,18 +41,8 @@ export default function Login() {
         return;
       }
 
-      // Immediately verify the token by fetching /auth/me
-      const meRes = await fetch(`${API_BASE_URL}/auth/me`, {
-        method: "GET",
-        credentials: "include",
-        mode: "cors",
-      });
-
-      if (!meRes.ok) {
-        setMessage("Unable to verify login. Try again.");
-        setLoading(false);
-        return;
-      }
+      // Use context login which updates state and localStorage
+      await login(data.token);
 
       router.push("/"); // redirect after successful login
     } catch (err) {

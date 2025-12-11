@@ -5,6 +5,7 @@ import { Sidebar } from "../layout/sidebar"
 import { TopBar } from "@/components/layout/topbar"
 import { TodayAppointments } from "@/components/doctor/today-appointment"
 import { ScheduleTimeline } from "@/components/doctor/schedule-timeline"
+import { API_BASE_URL, getAuthHeaders } from "@/lib/api-config"
 
 export function DoctorDashboard() {
   const [sidebarOpen, setSidebarOpen] = useState(true)
@@ -13,9 +14,9 @@ export function DoctorDashboard() {
   useEffect(() => {
     const fetchDoctor = async () => {
       try {
-        const base = (process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000") + "/api"
+        const base = API_BASE_URL
         const res = await fetch(`${base}/doctors/me`, {
-          credentials: "include",
+          headers: getAuthHeaders(),
         })
         if (res.ok) {
           const data = await res.json()

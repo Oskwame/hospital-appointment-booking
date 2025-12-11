@@ -2,6 +2,7 @@
 
 import { CalendarClock, Loader2 } from "lucide-react"
 import { useEffect, useState, useCallback } from "react"
+import { API_BASE_URL, getAuthHeaders } from "@/lib/api-config"
 
 interface Appointment {
   id: number
@@ -30,9 +31,9 @@ export function ScheduleTimeline() {
 
   const fetchAppointments = useCallback(async () => {
     try {
-      const base = (process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000") + "/api"
+      const base = API_BASE_URL
       const res = await fetch(`${base}/appointments/me`, {
-        credentials: "include",
+        headers: getAuthHeaders(),
       })
       if (res.ok) {
         const data = await res.json()

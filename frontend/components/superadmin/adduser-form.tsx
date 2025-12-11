@@ -15,6 +15,7 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog"
+import { API_BASE_URL, getAuthHeaders } from "@/lib/api-config"
 
 type RoleOpt = "admin" | "doctor"
 
@@ -49,11 +50,9 @@ export function AddUserForm({ open, onOpenChange, onCreated }: AddUserFormProps)
     setError(null)
     setSendingOtp(true)
     try {
-      const base = (process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000") + "/api"
-      const res = await fetch(`${base}/auth/users/request-otp`, {
+      const res = await fetch(`${API_BASE_URL}/auth/users/request-otp`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
+        headers: { "Content-Type": "application/json", ...getAuthHeaders() },
         body: JSON.stringify({ email }),
       })
       if (!res.ok) {
@@ -78,11 +77,9 @@ export function AddUserForm({ open, onOpenChange, onCreated }: AddUserFormProps)
     setError(null)
     setSaving(true)
     try {
-      const base = (process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000") + "/api"
-      const res = await fetch(`${base}/auth/users`, {
+      const res = await fetch(`${API_BASE_URL}/auth/users`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
+        headers: { "Content-Type": "application/json", ...getAuthHeaders() },
         body: JSON.stringify({ email, password, role: role.toUpperCase(), otp }),
       })
       if (!res.ok) {

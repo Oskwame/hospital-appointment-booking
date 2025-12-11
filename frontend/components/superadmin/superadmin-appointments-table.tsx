@@ -4,7 +4,7 @@ import { useEffect, useState } from "react"
 import { Card } from "@/components/ui/card"
 import { MoreVertical, Calendar } from "lucide-react"
 
-import { API_BASE_URL } from "@/lib/api-config"
+import { API_BASE_URL, getAuthHeaders } from "@/lib/api-config"
 
 interface Appointment {
     id: number
@@ -29,7 +29,7 @@ export function SuperAdminAppointmentsTable() {
     const fetchAppointments = async () => {
         try {
             const base = API_BASE_URL
-            const res = await fetch(`${base}/appointments`, { credentials: "include" })
+            const res = await fetch(`${base}/appointments`, { headers: getAuthHeaders() })
 
             if (!res.ok) {
                 throw new Error("Failed to fetch appointments")

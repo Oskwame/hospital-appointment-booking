@@ -10,7 +10,7 @@ import {
 } from "lucide-react"
 import { SuperAdminAppointmentsTable } from "@/components/superadmin/superadmin-appointments-table"
 
-import { API_BASE_URL } from "@/lib/api-config"
+import { API_BASE_URL, getAuthHeaders } from "@/lib/api-config"
 import { AppointmentsCalendar } from "../admin/appointments-calender"
 
 interface Metrics {
@@ -42,15 +42,18 @@ export function DashboardOverview() {
             const base = API_BASE_URL
 
             // Fetch appointments
-            const appointmentsRes = await fetch(`${base}/appointments`, { credentials: "include" })
+            // Fetch appointments
+            const appointmentsRes = await fetch(`${base}/appointments`, { headers: getAuthHeaders() })
             const appointments = await appointmentsRes.json()
 
             // Fetch doctors
-            const doctorsRes = await fetch(`${base}/doctors`, { credentials: "include" })
+            // Fetch doctors
+            const doctorsRes = await fetch(`${base}/doctors`, { headers: getAuthHeaders() })
             const doctors = await doctorsRes.json()
 
             // Fetch services
-            const servicesRes = await fetch(`${base}/services`, { credentials: "include" })
+            // Fetch services
+            const servicesRes = await fetch(`${base}/services`, { headers: getAuthHeaders() })
             const services = await servicesRes.json()
 
             const pending = appointments.filter((a: any) => a.status === 'pending').length

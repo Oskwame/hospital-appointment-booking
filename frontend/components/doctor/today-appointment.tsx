@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react"
 import { Clock, CheckCircle, AlertCircle, Calendar, User } from "lucide-react"
 import { AppointmentDetailDialog } from "./appointment-detail-dialog"
+import { API_BASE_URL, getAuthHeaders } from "@/lib/api-config"
 
 interface Appointment {
   id: number
@@ -23,9 +24,9 @@ export function TodayAppointments() {
   useEffect(() => {
     const fetchAppointments = async () => {
       try {
-        const base = (process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000") + "/api"
+        const base = API_BASE_URL
         const res = await fetch(`${base}/appointments/me`, {
-          credentials: "include",
+          headers: getAuthHeaders(),
         })
         if (res.ok) {
           const data = await res.json()
@@ -54,9 +55,9 @@ export function TodayAppointments() {
     setLoading(true)
     const fetchAppointments = async () => {
       try {
-        const base = (process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000") + "/api"
+        const base = API_BASE_URL
         const res = await fetch(`${base}/appointments/me`, {
-          credentials: "include",
+          headers: getAuthHeaders(),
         })
         if (res.ok) {
           const data = await res.json()

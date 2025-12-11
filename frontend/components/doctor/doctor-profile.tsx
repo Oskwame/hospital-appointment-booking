@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { Stethoscope, Clock, Users, Award, Mail, Phone } from "lucide-react"
+import { API_BASE_URL, getAuthHeaders } from "@/lib/api-config"
 
 interface DoctorData {
   id: number
@@ -20,9 +21,9 @@ export function DoctorProfile() {
   useEffect(() => {
     const fetchDoctor = async () => {
       try {
-        const base = (process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000") + "/api"
+        const base = API_BASE_URL
         const res = await fetch(`${base}/doctors/me`, {
-          credentials: "include",
+          headers: getAuthHeaders(),
         })
         if (res.ok) {
           const data = await res.json()
@@ -101,8 +102,8 @@ export function DoctorProfile() {
           <div className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
             <span className="text-sm text-slate-600">Status</span>
             <span className={`text-sm font-semibold px-2 py-1 rounded ${doctor.status === 'available' ? 'bg-green-100 text-green-700' :
-                doctor.status === 'busy' ? 'bg-yellow-100 text-yellow-700' :
-                  'bg-gray-100 text-gray-700'
+              doctor.status === 'busy' ? 'bg-yellow-100 text-yellow-700' :
+                'bg-gray-100 text-gray-700'
               }`}>
               {doctor.status}
             </span>

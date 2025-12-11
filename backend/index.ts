@@ -18,18 +18,6 @@ import reportsRoutes from "./routes/reports.route"
 dotenv.config()
 const app = express()
 
-// Security Middleware
-app.use(helmet())
-
-// Rate Limiting
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // limit each IP to 100 requests per windowMs
-  standardHeaders: true,
-  legacyHeaders: false,
-})
-app.use(limiter)
-
 // Dynamic CORS
 const allowedOrigins = [
   'http://localhost:3000',
@@ -47,6 +35,9 @@ app.use(cors({
   },
   credentials: true
 }));
+
+// Security Middleware
+app.use(helmet({ crossOriginResourcePolicy: { policy: "cross-origin" } }))
 
 
 app.use(cookieParser())

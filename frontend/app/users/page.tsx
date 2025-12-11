@@ -11,7 +11,7 @@ import { AddUserForm } from "@/components/superadmin/adduser-form"
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog"
 import { ViewUserDialog } from "@/components/superadmin/view-user-dialog"
 import { EditUserForm } from "@/components/superadmin/edit-user-form"
-import { API_BASE_URL } from "@/lib/api-config"
+import { API_BASE_URL, getAuthHeaders } from "@/lib/api-config"
 
 interface User {
   id: number
@@ -43,7 +43,7 @@ export default function UsersPage() {
       const base = API_BASE_URL
       const endpoint = showDeactivated ? `${base}/auth/users/deactivated` : `${base}/auth/users`
       const res = await fetch(endpoint, {
-        credentials: "include",
+        headers: getAuthHeaders(),
       })
 
       if (!res.ok) {
@@ -73,7 +73,7 @@ export default function UsersPage() {
       const base = API_BASE_URL
       const res = await fetch(`${base}/auth/users/${deleteUser.id}`, {
         method: "DELETE",
-        credentials: "include",
+        headers: getAuthHeaders(),
       })
 
       if (!res.ok) {
@@ -97,7 +97,7 @@ export default function UsersPage() {
       const base = API_BASE_URL
       const res = await fetch(`${base}/auth/users/${userId}/restore`, {
         method: "PATCH",
-        credentials: "include",
+        headers: getAuthHeaders(),
       })
 
       if (!res.ok) {

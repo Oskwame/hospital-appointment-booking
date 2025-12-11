@@ -5,6 +5,7 @@ import { Plus, Trash2, Edit2, RotateCcw } from "lucide-react"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { AddUserForm } from "@/components/superadmin/adduser-form"
+import { API_BASE_URL, getAuthHeaders } from "@/lib/api-config"
 
 interface ManagedUser {
   id: number
@@ -21,9 +22,9 @@ export function UserManagement() {
 
   const reload = useCallback(async () => {
     try {
-      const base = (process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000") + "/api"
+      const base = API_BASE_URL
       const endpoint = showDeactivated ? `${base}/auth/users/deactivated` : `${base}/auth/users`
-      const res = await fetch(endpoint, { credentials: "include" })
+      const res = await fetch(endpoint, { headers: getAuthHeaders() })
       if (res.ok) {
         const data = await res.json()
         setUsers(
@@ -48,10 +49,10 @@ export function UserManagement() {
     if (!confirm("Are you sure you want to deactivate this user? They will no longer be able to log in.")) return
 
     try {
-      const base = (process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000") + "/api"
+      const base = API_BASE_URL
       const res = await fetch(`${base}/auth/users/${userId}`, {
         method: "DELETE",
-        credentials: "include",
+        headers: getAuthHeaders(),
       })
 
       if (res.ok) {
@@ -67,10 +68,10 @@ export function UserManagement() {
 
   const handleActivateUser = async (userId: number) => {
     try {
-      const base = (process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000") + "/api"
+      const base = API_BASE_URL
       const res = await fetch(`${base}/auth/users/${userId}/restore`, {
         method: "PATCH",
-        credentials: "include",
+        headers: getAuthHeaders(),
       })
 
       if (res.ok) {
