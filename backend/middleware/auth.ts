@@ -14,7 +14,8 @@ export default function auth(req: Request, res: Response, next: NextFunction) {
       ; (req as any).userId = payload.userId
       ; (req as any).userRole = payload.role
     next()
-  } catch (err) {
+  } catch (err: any) {
+    console.error(`[AUTH] Verification failed: ${err.name} - ${err.message}`);
     return res.status(401).json({ message: "Unauthorized" })
   }
 }

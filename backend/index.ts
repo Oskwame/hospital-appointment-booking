@@ -61,4 +61,9 @@ app.use("/api/reports", reportsRoutes)
 const PORT = process.env.PORT || 5000
 app.listen(PORT, () => {
   console.log(`✅ Server running on http://localhost:${PORT}`)
+  if (!process.env.JWT_SECRET) {
+    console.error("❌ CRITICAL: JWT_SECRET is missing in environment variables!")
+  } else {
+    console.log(` JWT_SECRET loaded (${process.env.JWT_SECRET.length} chars)`)
+  }
 })
