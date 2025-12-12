@@ -45,7 +45,10 @@ app.use(cookieParser())
 app.use(express.json())
 
 app.get("/", (_req, res) => {
-  res.send("🚀 Backend is live!")
+  const secretStatus = process.env.JWT_SECRET
+    ? `Set (${process.env.JWT_SECRET.length} chars)`
+    : "MISSING";
+  res.send(`🚀 Backend is live! JWT_SECRET is: ${secretStatus}`)
 })
 
 app.use("/api/auth", authRoutes)
@@ -62,7 +65,7 @@ const PORT = process.env.PORT || 5000
 app.listen(PORT, () => {
   console.log(`✅ Server running on http://localhost:${PORT}`)
   if (!process.env.JWT_SECRET) {
-    console.error("❌ CRITICAL: JWT_SECRET is missing in environment variables!")
+    console.error(" CRITICAL: JWT_SECRET is missing in environment variables!")
   } else {
     console.log(` JWT_SECRET loaded (${process.env.JWT_SECRET.length} chars)`)
   }

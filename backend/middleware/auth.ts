@@ -16,6 +16,6 @@ export default function auth(req: Request, res: Response, next: NextFunction) {
     next()
   } catch (err: any) {
     console.error(`[AUTH] Verification failed: ${err.name} - ${err.message}`);
-    return res.status(401).json({ message: "Unauthorized" })
+    return res.status(401).json({ message: `Unauthorized: ${err.message}`, error: err.name })
   }
 }
