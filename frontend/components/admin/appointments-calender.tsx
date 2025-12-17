@@ -3,7 +3,7 @@
 import { ChevronLeft, ChevronRight, Calendar } from "lucide-react"
 import { useState, useMemo, useEffect, useCallback } from "react"
 import { Card } from "@/components/ui/card"
-import { API_BASE_URL } from "@/lib/api-config"
+import { API_BASE_URL, getAuthHeaders } from "@/lib/api-config"
 
 // Helper functions for date calculations
 const getDaysInMonth = (year: number, month: number) => {
@@ -54,7 +54,7 @@ export function AppointmentsCalendar() {
   const fetchAppointments = useCallback(async () => {
     try {
       setLoading(true)
-      const res = await fetch(`${API_BASE_URL}/appointments`, { credentials: "include" })
+      const res = await fetch(`${API_BASE_URL}/appointments`, { headers: getAuthHeaders() })
       if (res.ok) {
         const data = await res.json()
         setAppointments(data)
