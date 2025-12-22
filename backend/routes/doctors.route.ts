@@ -1,6 +1,7 @@
 import express from 'express'
 import prisma from '../prisma/prismaClient'
 import auth from '../middleware/auth'
+import { isValidEmail } from '../utils/validators'
 
 const router = express.Router()
 

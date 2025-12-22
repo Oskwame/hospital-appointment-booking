@@ -12,6 +12,7 @@ const auth_1 = __importDefault(require("../middleware/auth"));
 const nodemailer_1 = __importDefault(require("nodemailer"));
 const express_rate_limit_1 = __importDefault(require("express-rate-limit"));
 const email_service_1 = require("../services/email.service");
+const audit_service_1 = require("../services/audit.service");
 const otpStore = new Map();
 const OTP_TTL_MS = 10 * 60 * 1000;
 // simple in-memory preferences per user
@@ -67,27 +68,30 @@ router.post('/login', loginLimiter, async (req, res) => {
         const user = await prismaClient_1.default.user.findUnique({ where: { email } });
         if (!user) {
             console.warn(`[SECURITY] Failed login - Invalid email: ${email}, IP: ${req.ip}`);
+            // Log failed login attempt
+            const ipAddress = req.headers['x-forwarded-for'] || req.ip;
+            (0, audit_service_1.logLoginAttempt)(email, false, ipAddress, req.headers['user-agent']);
             return res.status(401).json({ message: 'Invalid email or password' });
         }
         // Compare password
         const isMatch = await bcryptjs_1.default.compare(password, user.password);
         if (!isMatch) {
             console.warn(`[SECURITY] Failed login - Invalid password for: ${email}, IP: ${req.ip}`);
+            // Log failed login attempt
+            const ipAddress = req.headers['x-forwarded-for'] || req.ip;
+            (0, audit_service_1.logLoginAttempt)(email, false, ipAddress, req.headers['user-agent']);
             return res.status(401).json({ message: 'Invalid email or password' });
         }
         // Successful login - log it
         console.log(`[AUTH] Successful login: ${email}, IP: ${req.ip}`);
+        // Audit log successful login
+        const ipAddress = req.headers['x-forwarded-for'] || req.ip;
+        (0, audit_service_1.logLoginAttempt)(email, true, ipAddress, req.headers['user-agent'], user.id);
         // Generate token with role
         const token = jsonwebtoken_1.default.sign({ userId: user.id, role: user.role }, process.env.JWT_SECRET, {
             expiresIn: '1d',
         });
-        res.cookie('token', token, {
-            httpOnly: true,
-            sameSite: 'lax',
-            secure: false,
-            path: '/',
-            maxAge: 24 * 60 * 60 * 1000,
-        });
+        // Cookie setting removed for header-based auth
         res.json({ token });
     }
     catch (err) {
@@ -96,7 +100,7 @@ router.post('/login', loginLimiter, async (req, res) => {
     }
 });
 router.post('/logout', (_req, res) => {
-    res.clearCookie('token', { path: '/' });
+    // No need to clear cookie in stateless auth
     res.json({ message: 'Logged out' });
 });
 // POST /api/auth/refresh - Refresh access token
@@ -137,13 +141,7 @@ router.post('/refresh', async (req, res) => {
             expiresIn: '1d',
         });
         // Set new cookie
-        res.cookie('token', newToken, {
-            httpOnly: true,
-            sameSite: 'lax',
-            secure: false,
-            path: '/',
-            maxAge: 24 * 60 * 60 * 1000,
-        });
+        // Cookie setting removed for header-based auth
         console.log(`[AUTH] Token refreshed for user: ${user.email}`);
         res.json({ token: newToken, message: 'Token refreshed' });
     }

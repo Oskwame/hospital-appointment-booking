@@ -244,48 +244,102 @@ export function ServiceForm({ service, onSubmit, onCancel }: ServiceFormProps) {
           )}
         </div>
 
-        {/* Time Slots */}
-        <div className="pt-6 border-t border-gray-100 space-y-4">
-          <h4 className="text-lg font-semibold text-slate-800">Available Time Slots</h4>
+        {/* Time Slots per Session */}
+        <div className="pt-6 border-t border-gray-100 space-y-6">
+          <h4 className="text-lg font-semibold text-slate-800">Time Slots by Session</h4>
+          <p className="text-sm text-slate-500">Add specific appointment times for each active session.</p>
 
-          <div className="flex gap-3">
-            <input
-              type="time"
-              value={newTime}
-              onChange={(e) => setNewTime(e.target.value)}
-              className="flex-1 px-4 py-3 border border-gray-200 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-              aria-label="Add time slot"
-            />
-            <Button
-              type="button"
-              onClick={handleAddTime}
-              variant="outline"
-              className="rounded-xl border-blue-300 text-blue-600 hover:bg-blue-50 px-4"
-            >
-              <Plus className="h-4 w-4 mr-2" /> Add
-            </Button>
-          </div>
-
-          {timeSlots.length > 0 && (
-            <div className="flex flex-wrap gap-2">
-              {timeSlots.map((time) => (
-                <div
-                  key={time}
-                  className="flex items-center gap-2 px-3 py-1 bg-blue-50 border border-blue-100 text-blue-800 rounded-full text-sm shadow-sm"
-                >
-                  <span>{time}</span>
-                  <button
-                    type="button"
-                    onClick={() => handleRemoveTime(time)}
-                    className="hover:bg-blue-100 p-1 rounded"
-                    aria-label={`Remove time ${time}`}
-                  >
-                    <X className="h-3 w-3" />
-                  </button>
-                </div>
-              ))}
-            </div>
+          {availableSessions.length === 0 && (
+            <p className="text-sm text-yellow-600 bg-yellow-50 p-3 rounded-lg">
+              Please select at least one session above to add time slots.
+            </p>
           )}
+
+          {['morning', 'afternoon', 'evening'].filter(s => availableSessions.includes(s)).map((session) => {
+            const getSessionTimes = () => {
+              const ranges = {
+                morning: { start: 6, end: 11 },
+                afternoon: { start: 12, end: 16 },
+                evening: { start: 17, end: 21 }
+              }
+              const range = ranges[session as keyof typeof ranges]
+
+              // Filter existing slots that belong to this session
+              return timeSlots.filter(t => {
+                const hour = parseInt(t.split(':')[0])
+                return hour >= range.start && hour <= range.end
+              }).sort()
+            }
+
+            const sessionTimes = getSessionTimes()
+
+            return (
+              <div key={session} className="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                <h5 className="font-medium text-slate-700 capitalize mb-3 flex items-center gap-2">
+                  {session} Slots
+                  <span className="text-xs font-normal text-slate-500">
+                    ({session === 'morning' ? '6AM - 12PM' : session === 'afternoon' ? '12PM - 5PM' : '5PM - 9PM'})
+                  </span>
+                </h5>
+
+                <div className="flex gap-3 mb-3">
+                  <input
+                    type="time"
+                    className="flex-1 px-3 py-2 border border-gray-200 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                    onChange={(e) => {
+                      const val = e.target.value
+                      if (!val) return
+
+                      const hour = parseInt(val.split(':')[0])
+                      const ranges = {
+                        morning: { start: 6, end: 11 },
+                        afternoon: { start: 12, end: 16 },
+                        evening: { start: 17, end: 23 }
+                      }
+                      const range = ranges[session as keyof typeof ranges]
+
+                      if (hour < range.start || hour > range.end) {
+                        alert(`Time ${val} does not fall within ${session} hours (${range.start}:00 - ${range.end}:59)`)
+                        e.target.value = ""
+                        return
+                      }
+
+                      if (!timeSlots.includes(val)) {
+                        setTimeSlots([...timeSlots, val].sort())
+                      }
+                      e.target.value = ""
+                    }}
+                  />
+                  <div className="flex items-center text-xs text-slate-400">
+                    Select time to add
+                  </div>
+                </div>
+
+                <div className="flex flex-wrap gap-2">
+                  {sessionTimes.length > 0 ? (
+                    sessionTimes.map((time) => (
+                      <div
+                        key={time}
+                        className="flex items-center gap-2 px-3 py-1 bg-white border border-blue-200 text-blue-700 rounded-md text-sm shadow-sm"
+                      >
+                        <span>{time}</span>
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveTime(time)}
+                          className="hover:bg-red-50 hover:text-red-500 p-0.5 rounded transition"
+                          aria-label={`Remove time ${time}`}
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </div>
+                    ))
+                  ) : (
+                    <span className="text-xs text-slate-400 italic">No slots added yet</span>
+                  )}
+                </div>
+              </div>
+            )
+          })}
         </div>
 
         {/* Actions */}

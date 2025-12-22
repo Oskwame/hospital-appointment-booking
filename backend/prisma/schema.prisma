@@ -50,6 +50,8 @@ model Appointment {
   description     String?
   appointmentDate DateTime @map("appointment_date")
   status          String   @default("pending")
+  session         String?
+  timeSlot        String?   @map("time_slot")
   serviceId       Int      @map("service_id")
   doctorId        Int?     @map("doctor_id")
   createdAt       DateTime @default(now()) @map("created_at")
@@ -99,3 +101,21 @@ model Doctor {
   @@map("doctors")
 }
 
+model AuditLog {
+  id        Int      @id @default(autoincrement())
+  userId    Int?     @map("user_id")
+  userEmail String?  @map("user_email")
+  action    String
+  entity    String?
+  entityId  Int?     @map("entity_id")
+  details   Json?
+  ipAddress String?  @map("ip_address")
+  userAgent String?  @map("user_agent")
+  status    String
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("audit_logs")
+  @@index([userId])
+  @@index([action])
+  @@index([createdAt])
+}

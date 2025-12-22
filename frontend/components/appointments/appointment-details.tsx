@@ -7,6 +7,8 @@ import { Badge } from "@/components/ui/badge"
 import { X, Mail, CheckCircle, PlayCircle, Clock, XCircle } from "lucide-react"
 
 
+import { API_BASE_URL, getAuthHeaders } from "@/lib/api-config"
+
 type Role = "admin" | "superadmin" | "doctor" | null
 
 interface AppointmentDetailProps {
@@ -20,6 +22,8 @@ interface AppointmentDetailProps {
     status: string
     description: string
     doctorName?: string
+    session?: string
+    timeSlot?: string
   }
   onClose: () => void
   role?: Role
@@ -62,8 +66,9 @@ export function AppointmentDetail({ appointment, onClose, role, onStatusUpdated 
     if (isAdmin && showReassign) {
       const fetchDoctors = async () => {
         try {
-          const base = (process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000") + "/api"
-          const res = await fetch(`${base}/doctors`, { credentials: "include" })
+          const res = await fetch(`${API_BASE_URL}/doctors`, {
+            headers: getAuthHeaders()
+          })
           if (res.ok) {
             const data = await res.json()
             // Filter doctors that match the appointment service if possible, or show all
@@ -84,11 +89,9 @@ export function AppointmentDetail({ appointment, onClose, role, onStatusUpdated 
     setError(null)
     setUpdating(true)
     try {
-      const base = (process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000") + "/api"
-      const res = await fetch(`${base}/appointments/${appointment.id}`, {
+      const res = await fetch(`${API_BASE_URL}/appointments/${appointment.id}`, {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
+        headers: { "Content-Type": "application/json", ...getAuthHeaders() },
         body: JSON.stringify({ doctorId: parseInt(selectedDoctorId) }),
       })
 
@@ -110,11 +113,9 @@ export function AppointmentDetail({ appointment, onClose, role, onStatusUpdated 
     setError(null)
     setUpdating(true)
     try {
-      const base = (process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000") + "/api"
-      const res = await fetch(`${base}/appointments/${appointment.id}`, {
+      const res = await fetch(`${API_BASE_URL}/appointments/${appointment.id}`, {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
+        headers: { "Content-Type": "application/json", ...getAuthHeaders() },
         body: JSON.stringify({ status: newStatus }),
       })
 
@@ -244,7 +245,7 @@ export function AppointmentDetail({ appointment, onClose, role, onStatusUpdated 
             <div>
               <p className="text-xs text-slate-500">Session</p>
               <p className="text-slate-800 font-medium text-sm">
-                {(() => {
+                {appointment.session || (() => {
                   const hour = parseInt(appointment.time.split(':')[0])
                   if (hour >= 7 && hour < 10) return 'Morning (7AM-10AM)'
                   if (hour >= 11 && hour < 15) return 'Afternoon (11AM-3PM)'

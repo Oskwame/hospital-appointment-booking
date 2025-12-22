@@ -7,7 +7,7 @@ import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select"
-import { X } from "lucide-react"
+import { X, AlertCircle } from "lucide-react"
 import { API_BASE_URL, getAuthHeaders } from "@/lib/api-config"
 
 interface AppointmentFormProps {
@@ -25,6 +25,8 @@ export function AppointmentForm({ appointment, onClose, onCreated }: Appointment
   const [description, setDescription] = useState("")
   const [date, setDate] = useState("")
   const [session, setSession] = useState("")
+  const [newTime, setNewTime] = useState("")
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     const run = async () => {
@@ -53,21 +55,38 @@ export function AppointmentForm({ appointment, onClose, onCreated }: Appointment
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!canSubmit) return
+    setError(null)
+
     try {
       const base = API_BASE_URL
       const res = await fetch(`${base}/appointments`, {
         method: "POST",
         headers: { "Content-Type": "application/json", ...getAuthHeaders() },
-        body: JSON.stringify({ name, email, gender, description, serviceId, date, session }),
+        body: JSON.stringify({
+          name,
+          email,
+          gender,
+          description,
+          serviceId,
+          date,
+          session,
+          time: newTime !== "none" ? newTime : undefined
+        }),
       })
-      const created = await res.json()
-      if (created && typeof created === 'object') {
-        onCreated?.(created)
 
+      const data = await res.json()
 
+      if (!res.ok) {
+        setError(data.message || "Failed to create appointment")
+        return
       }
+
+      onCreated?.(data)
       onClose()
-    } catch (e) { }
+    } catch (e) {
+      setError("An unexpected error occurred. Please try again.")
+      console.error(e)
+    }
   }
 
   return (
@@ -82,6 +101,13 @@ export function AppointmentForm({ appointment, onClose, onCreated }: Appointment
           <X className="h-5 w-5 text-gray-500" />
         </button>
       </div>
+
+      {error && (
+        <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-center gap-3 text-red-700">
+          <AlertCircle className="h-5 w-5 flex-shrink-0" />
+          <p className="text-sm font-medium">{error}</p>
+        </div>
+      )}
 
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Name / Email / Gender */}
@@ -146,7 +172,7 @@ export function AppointmentForm({ appointment, onClose, onCreated }: Appointment
         </div>
 
         {/* Date / Time */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-600 mb-1">Available Date</label>
             <Select value={date || undefined} onValueChange={(v) => setDate(v)}>
@@ -162,27 +188,53 @@ export function AppointmentForm({ appointment, onClose, onCreated }: Appointment
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-600 mb-1">Session</label>
-            <Select value={session || undefined} onValueChange={(v) => setSession(v)}>
+            <Select value={session || undefined} onValueChange={(v) => {
+              setSession(v)
+              setNewTime("") // Reset time when session changes
+            }}>
               <SelectTrigger className="w-full rounded-lg border border-gray-300 focus:border-blue-500 focus:ring focus:ring-blue-200 transition">
                 <SelectValue placeholder={selectedService ? "Select a session" : "Select a service first"} />
               </SelectTrigger>
               <SelectContent className=" bg-white">
                 {selectedService?.availableSessions?.includes('morning') !== false && (
-                  <SelectItem value="morning">Morning (7:00 AM - 10:00 AM)</SelectItem>
+                  <SelectItem value="morning">Morning (6AM - 12PM)</SelectItem>
                 )}
                 {selectedService?.availableSessions?.includes('afternoon') !== false && (
-                  <SelectItem value="afternoon">Afternoon (11:00 AM - 3:00 PM)</SelectItem>
+                  <SelectItem value="afternoon">Afternoon (12PM - 5PM)</SelectItem>
                 )}
                 {selectedService?.availableSessions?.includes('evening') !== false && (
-                  <SelectItem value="evening">Evening (3:00 PM - 6:00 PM)</SelectItem>
+                  <SelectItem value="evening">Evening (5PM - 9PM)</SelectItem>
                 )}
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-600 mb-1">Time Slot (Optional)</label>
+            <Select value={newTime || undefined} onValueChange={(v) => setNewTime(v)} disabled={!session}>
+              <SelectTrigger className="w-full rounded-lg border border-gray-300 focus:border-blue-500 focus:ring focus:ring-blue-200 transition disabled:bg-gray-50">
+                <SelectValue placeholder={!session ? "Select session first" : "Select time"} />
+              </SelectTrigger>
+              <SelectContent className="bg-white">
+                {selectedService?.timeSlots
+                  ?.filter(t => {
+                    if (!session) return true
+                    const hour = parseInt(t.split(':')[0])
+                    if (session === 'morning') return hour >= 6 && hour < 12
+                    if (session === 'afternoon') return hour >= 12 && hour < 17
+                    if (session === 'evening') return hour >= 17
+                    return true
+                  })
+                  .map((t) => (
+                    <SelectItem key={t} value={t}>{t}</SelectItem>
+                  ))}
+                <SelectItem value="none">No Specific Time</SelectItem>
               </SelectContent>
             </Select>
           </div>
         </div>
 
         {/* Action Buttons */}
-        <div className=" grid grid-cols-1 md:grid-cols-2 gap-3 justify-end mt-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 justify-end mt-4">
           <Button
             variant="outline"
             onClick={onClose}
@@ -200,6 +252,6 @@ export function AppointmentForm({ appointment, onClose, onCreated }: Appointment
           </Button>
         </div>
       </form>
-    </Card>
+    </Card >
   )
 }

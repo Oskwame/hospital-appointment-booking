@@ -21,12 +21,14 @@ interface AppointmentRow {
   status: string
   description: string
   doctorName?: string
+  session?: string
+  timeSlot?: string
 }
 
 type TabType = "upcoming" | "previous"
 
 export function AppointmentsManager() {
-  const { role } = useAuth()
+  const { role, loading } = useAuth()
   const [appointments, setAppointments] = useState<AppointmentRow[]>([])
   const [servicesMap, setServicesMap] = useState<Record<number, string>>({})
   const [showForm, setShowForm] = useState(false)
@@ -38,6 +40,7 @@ export function AppointmentsManager() {
   const base = useMemo(() => API_BASE_URL, [])
 
   const reload = useCallback(async () => {
+    if (loading) return
     try {
       const r = String(role || '').toLowerCase()
       // Use /me endpoint for doctors to get only their appointments
@@ -67,11 +70,13 @@ export function AppointmentsManager() {
             status: a.status || "booked",
             description: a.description || "",
             doctorName: a.doctor?.name || (a.doctor_name) || undefined,
+            session: a.session,
+            timeSlot: a.time_slot
           } as AppointmentRow
         })
       )
     } catch (e) { }
-  }, [base, role])
+  }, [base, role, loading])
 
   // Helper function to get session from time
   const getSessionFromTime = (time: string): string => {

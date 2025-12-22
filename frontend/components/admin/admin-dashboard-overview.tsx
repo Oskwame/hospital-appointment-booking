@@ -7,7 +7,7 @@ import {
     TrendingUp, TrendingDown, CalendarPlus,
     FileText, ClipboardList, UserCheck
 } from "lucide-react"
-import { API_BASE_URL } from "@/lib/api-config"
+import { API_BASE_URL, getAuthHeaders } from "@/lib/api-config"
 import { AppointmentsCalendar } from "./appointments-calender"
 import { AdminAppointmentsTable } from "./admin-appointments-table"
 
@@ -40,11 +40,11 @@ export function AdminDashboardOverview() {
             const base = API_BASE_URL
 
             // Fetch appointments
-            const appointmentsRes = await fetch(`${base}/appointments`, { credentials: "include" })
+            const appointmentsRes = await fetch(`${base}/appointments`, { headers: getAuthHeaders() })
             const appointments = await appointmentsRes.json()
 
             // Fetch doctors
-            const doctorsRes = await fetch(`${base}/doctors`, { credentials: "include" })
+            const doctorsRes = await fetch(`${base}/doctors`, { headers: getAuthHeaders() })
             const doctors = await doctorsRes.json()
 
             // Calculate metrics

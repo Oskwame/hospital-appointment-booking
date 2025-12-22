@@ -16,6 +16,8 @@ interface Appointment {
     status: string
     service_id: number
     doctor_id: number | null
+    session?: string
+    time_slot?: string
     created_at: string
 }
 
@@ -166,13 +168,32 @@ export function AppointmentDetailDialog({
                                 <p className="text-sm md:text-base text-slate-800 font-medium pl-5 md:pl-6">{formatDate(appointment.appointment_date)}</p>
                             </div>
 
+                            {/* Session */}
+                            <div className="space-y-1 md:space-y-2">
+                                <div className="flex items-center gap-2 text-slate-500">
+                                    <Clock className="h-3 md:h-4 w-3 md:w-4" />
+                                    <span className="text-xs md:text-sm font-medium">Session</span>
+                                </div>
+                                <p className="text-sm md:text-base text-slate-800 font-medium pl-5 md:pl-6">
+                                    {appointment.session || (() => {
+                                        const hour = new Date(appointment.appointment_date).getHours()
+                                        if (hour >= 7 && hour < 10) return 'Morning'
+                                        if (hour >= 11 && hour < 15) return 'Afternoon'
+                                        if (hour >= 15 && hour < 18) return 'Evening'
+                                        return 'N/A'
+                                    })()}
+                                </p>
+                            </div>
+
                             {/* Time */}
-                            <div className="space-y-1 md:space-y-2 sm:col-span-2">
+                            <div className="space-y-1 md:space-y-2">
                                 <div className="flex items-center gap-2 text-slate-500">
                                     <Clock className="h-3 md:h-4 w-3 md:w-4" />
                                     <span className="text-xs md:text-sm font-medium">Appointment Time</span>
                                 </div>
-                                <p className="text-sm md:text-base text-slate-800 font-medium pl-5 md:pl-6">{formatTime(appointment.appointment_date)}</p>
+                                <p className="text-sm md:text-base text-slate-800 font-medium pl-5 md:pl-6">
+                                    {appointment.time_slot || formatTime(appointment.appointment_date)}
+                                </p>
                             </div>
                         </div>
                     </div>

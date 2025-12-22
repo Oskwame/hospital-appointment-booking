@@ -19,7 +19,8 @@ function auth(req, res, next) {
         req.userRole = payload.role;
         next();
     }
-    catch {
-        return res.status(401).json({ message: "Unauthorized" });
+    catch (err) {
+        console.error(`[AUTH] Verification failed: ${err.name} - ${err.message}`);
+        return res.status(401).json({ message: `Unauthorized: ${err.message}`, error: err.name });
     }
 }

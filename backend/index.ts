@@ -1,9 +1,9 @@
 import express from "express"
+import path from "path"
 import cors from "cors"
 import dotenv from "dotenv"
 import cookieParser from "cookie-parser"
 import helmet from "helmet"
-import rateLimit from "express-rate-limit"
 
 import authRoutes from "./routes/auth.route"
 import postsRoutes from "./routes/posts.route"
@@ -18,6 +18,9 @@ import reportsRoutes from "./routes/reports.route"
 dotenv.config()
 const app = express()
 
+// Serve static files - moved before CORS to allow public access
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')))
+
 // Dynamic CORS
 const allowedOrigins = [
   'http://localhost:3000',
@@ -26,13 +29,20 @@ const allowedOrigins = [
   'https://hospital-appointment-front-production.up.railway.app'
 ];
 
+// CORS configuration with origin validation
 app.use(cors({
   origin: (origin, callback) => {
+    // Allow requests with no origin (e.g., mobile apps, Postman)
     if (!origin) return callback(null, true);
-    if (!allowedOrigins.includes(origin)) {
-      return callback(new Error('CORS not allowed from this origin'), false);
+
+    // Check if origin is in allowed list
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
     }
-    return callback(null, true);
+
+    // Log and reject unauthorized origin
+    console.warn(`[SECURITY] CORS rejected unauthorized origin: ${origin}`);
+    return callback(new Error('CORS policy violation - unauthorized origin'));
   },
   credentials: true
 }));
@@ -42,7 +52,11 @@ app.use(helmet({ crossOriginResourcePolicy: { policy: "cross-origin" } }))
 
 
 app.use(cookieParser())
-app.use(express.json())
+
+// Request size limits to prevent large payload attacks
+app.use(express.json({ limit: '1mb' }))
+app.use(express.urlencoded({ extended: true, limit: '1mb' }))
+
 
 app.get("/", (_req, res) => {
   const secretStatus = process.env.JWT_SECRET
@@ -58,6 +72,10 @@ app.use("/api/doctors", doctorsRoutes)
 app.use("/api/appointments", appointmentsRoutes)
 // app.use("/api/dates", datesRoutes) // Disabled - AvailableDate model removed
 app.use("/api/reports", reportsRoutes)
+
+import uploadRoutes from "./routes/upload.route"
+
+app.use("/api/upload", uploadRoutes)
 // app.use("/api/blog", blogRoutes)
 
 

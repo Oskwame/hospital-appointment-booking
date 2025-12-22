@@ -2,33 +2,82 @@ import express from 'express'
 import prisma from '../prisma/prismaClient'
 import auth from '../middleware/auth'
 import { sendAppointmentConfirmation } from '../services/email.service'
+import { isValidEmail } from '../utils/validators'
+import { sanitizeText } from '../utils/sanitization'
+import { logAppointmentCreation, logAppointmentUpdate } from '../services/audit.service'
+import { appointmentLimiter } from '../middleware/rateLimiters'
 
 const router = express.Router()
 
-router.get('/', async (_req, res) => {
+router.get('/', auth, async (req, res) => {
   try {
-    const appts = await prisma.appointment.findMany({
-      include: {
-        doctor: true,
-        service: true
-      },
-      orderBy: { createdAt: 'desc' }
-    })
-    const payload = appts.map((a) => ({
-      id: a.id,
-      name: a.name,
-      email: a.email,
-      phone: a.phone,
-      description: a.description ?? '',
-      appointment_date: a.appointmentDate.toISOString(),
-      status: a.status,
-      service_id: a.serviceId,
-      service_name: a.service?.name || 'General',
-      doctor_id: a.doctorId,
-      doctor_name: a.doctor?.name || null,
-      created_at: a.createdAt,
-    }))
-    res.json(payload)
+    const userRole = (req as any).userRole
+    const userId = (req as any).userId
+
+    if (userRole === 'DOCTOR') {
+      // Find doctor profile
+      const user = await prisma.user.findUnique({ where: { id: userId } })
+      if (!user) return res.status(404).json({ message: 'User not found' })
+
+      const doctor = await prisma.doctor.findFirst({ where: { email: user.email } })
+      if (!doctor) return res.status(404).json({ message: 'Doctor profile not found' })
+
+      const appts = await prisma.appointment.findMany({
+        where: { doctorId: doctor.id },
+        include: {
+          doctor: true,
+          service: true
+        },
+        orderBy: { createdAt: 'desc' }
+      })
+      const payload = appts.map((a) => ({
+        id: a.id,
+        name: a.name,
+        email: a.email,
+        phone: a.phone,
+        description: a.description ?? '',
+        appointment_date: a.appointmentDate.toISOString(),
+        status: a.status,
+        service_id: a.serviceId,
+        service_name: a.service?.name || 'General',
+        doctor_id: a.doctorId,
+        doctor_name: a.doctor?.name || null,
+        session: a.session,
+        time_slot: a.timeSlot,
+        created_at: a.createdAt,
+      }))
+      return res.json(payload)
+    }
+
+    if (['ADMIN', 'SUPERADMIN'].includes(userRole)) {
+      const appts = await prisma.appointment.findMany({
+        include: {
+          doctor: true,
+          service: true
+        },
+        orderBy: { createdAt: 'desc' }
+      })
+      const payload = appts.map((a) => ({
+        id: a.id,
+        name: a.name,
+        email: a.email,
+        phone: a.phone,
+        description: a.description ?? '',
+        appointment_date: a.appointmentDate.toISOString(),
+        status: a.status,
+        service_id: a.serviceId,
+        service_name: a.service?.name || 'General',
+        doctor_id: a.doctorId,
+        doctor_name: a.doctor?.name || null,
+        session: a.session,
+        time_slot: a.timeSlot,
+        created_at: a.createdAt,
+      }))
+      return res.json(payload)
+    }
+
+    return res.status(403).json({ message: 'Forbidden' })
+
   } catch (err) {
     res.status(500).json({ message: 'Server error' })
   }
@@ -65,6 +114,8 @@ router.get('/me', auth, async (req, res) => {
       service_id: a.serviceId,
       doctor_id: a.doctorId,
       doctor_name: a.doctor?.name || null,
+      session: a.session,
+      time_slot: a.timeSlot,
       created_at: a.createdAt,
     }))
     res.json(payload)
@@ -73,27 +124,42 @@ router.get('/me', auth, async (req, res) => {
   }
 })
 
-router.post('/', async (req, res) => {
+router.post('/', appointmentLimiter, async (req, res) => {
   try {
     const { name, email, gender, description, serviceId, date, session } = req.body as any
+
+    // Validate required fields
     if (!name || !email || !serviceId || !date || !session) {
       return res.status(400).json({ message: 'Missing required fields' })
     }
 
+    // Validate email format
+    if (!isValidEmail(email)) {
+      return res.status(400).json({ message: 'Invalid email format' })
+    }
+
     // Map session to time
     let time: string
-    switch (session.toLowerCase()) {
-      case 'morning':
-        time = '07:00'
-        break
-      case 'afternoon':
-        time = '11:00'
-        break
-      case 'evening':
-        time = '15:00'
-        break
-      default:
-        return res.status(400).json({ message: 'Invalid session. Must be morning, afternoon, or evening' })
+
+    // Check if specific time was provided
+    const providedTime = (req.body as any).time
+    if (providedTime && /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/.test(providedTime)) {
+      time = providedTime
+    } else {
+      // Fallback to session default
+      switch (session.toLowerCase()) {
+        case 'morning':
+          time = '07:00'
+          break
+        case 'afternoon':
+          time = '11:00'
+          break
+        case 'evening':
+          time = '15:00'
+          break
+        default:
+          return res.status(400).json({ message: 'Invalid session. Must be morning, afternoon, or evening' })
+      }
     }
 
     const svcId = Number(serviceId)
@@ -101,7 +167,9 @@ router.post('/', async (req, res) => {
     const service = await prisma.service.findUnique({ where: { id: svcId } })
     if (!service) return res.status(404).json({ message: 'Service not found' })
 
-    const iso = `${String(date)}T${time}:00`
+    // Safe date parsing: ensure we use only the YYYY-MM-DD part if provided string is too long
+    const dateStr = String(date).split('T')[0]
+    const iso = `${dateStr}T${time}:00`
     const when = new Date(iso)
     if (Number.isNaN(when.getTime())) return res.status(400).json({ message: 'Invalid date/time' })
 
@@ -114,7 +182,9 @@ router.post('/', async (req, res) => {
     }
 
     const desc = description ? String(description) : ''
-    const finalDesc = gender ? `${desc}${desc ? ' | ' : ''}gender:${String(gender)}` : desc
+    // Sanitize description to prevent XSS
+    const sanitizedDesc = sanitizeText(desc)
+    const finalDesc = gender ? `${sanitizedDesc}${sanitizedDesc ? ' | ' : ''}gender:${String(gender)}` : sanitizedDesc
 
     // Find an available doctor with matching service
     const availableDoctor = await prisma.doctor.findFirst({
@@ -133,8 +203,16 @@ router.post('/', async (req, res) => {
         appointmentDate: when,
         serviceId: svcId,
         doctorId: availableDoctor?.id || null,
+        session: session,
+        timeSlot: (providedTime && /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/.test(providedTime)) ? providedTime : null,
       },
     })
+
+    // Audit log appointment creation
+    const ipAddress = (req.headers['x-forwarded-for'] as string) || req.ip
+    logAppointmentCreation(created.id, created.email, ipAddress).catch(err =>
+      console.error('[AUDIT] Failed to log appointment creation:', err)
+    )
     res.status(201).json({
       id: created.id,
       name: created.name,
@@ -145,7 +223,8 @@ router.post('/', async (req, res) => {
       status: created.status,
       service_id: created.serviceId,
       doctor_id: created.doctorId,
-      session: session,
+      session: created.session,
+      time_slot: created.timeSlot,
       created_at: created.createdAt,
     })
   } catch (err) {
@@ -201,7 +280,37 @@ router.patch('/:id', auth, async (req, res) => {
       const updated = await prisma.appointment.update({
         where: { id: appointmentId },
         data: { status },
+        include: { doctor: true, service: true }
       })
+
+      // Send email if status changed to confirmed
+      if (status === 'confirmed' && appointment.status !== 'confirmed') {
+        console.log('📧 Doctor approved appointment, preparing to send email...')
+        console.log('Previous status:', appointment.status)
+        console.log('New status:', status)
+        console.log('Recipient email:', updated.email)
+
+        const time = updated.appointmentDate.toLocaleTimeString('en-US', {
+          hour: 'numeric',
+          minute: '2-digit',
+          hour12: true
+        })
+
+        // Send email asynchronously
+        sendAppointmentConfirmation(
+          updated.email,
+          updated.name,
+          updated.appointmentDate,
+          time,
+          updated.doctor?.name || 'Assigned Doctor',
+          updated.service?.name || 'General Consultation',
+          updated.id
+        ).then(() => {
+          console.log('✅ Email sent successfully to:', updated.email)
+        }).catch(err => {
+          console.error('❌ Failed to send confirmation email:', err)
+        })
+      }
 
       return res.json(formatAppointment(updated))
     }

@@ -7,6 +7,8 @@ import auth from '../middleware/auth'
 import nodemailer from 'nodemailer'
 import rateLimit from 'express-rate-limit'
 import { sendOTP } from '../services/email.service'
+import { isValidEmail } from '../utils/validators'
+import { logLoginAttempt, logUserCreation, logUserUpdate, logUserDeactivation, logPasswordChange } from '../services/audit.service'
 
 const otpStore = new Map<string, { code: string; expires: number }>()
 const OTP_TTL_MS = 10 * 60 * 1000
@@ -75,6 +77,9 @@ router.post('/login', loginLimiter, async (req, res) => {
     const user = await prisma.user.findUnique({ where: { email } })
     if (!user) {
       console.warn(`[SECURITY] Failed login - Invalid email: ${email}, IP: ${req.ip}`)
+      // Log failed login attempt
+      const ipAddress = (req.headers['x-forwarded-for'] as string) || req.ip
+      logLoginAttempt(email, false, ipAddress, req.headers['user-agent'])
       return res.status(401).json({ message: 'Invalid email or password' })
     }
 
@@ -82,11 +87,18 @@ router.post('/login', loginLimiter, async (req, res) => {
     const isMatch = await bcrypt.compare(password, user.password)
     if (!isMatch) {
       console.warn(`[SECURITY] Failed login - Invalid password for: ${email}, IP: ${req.ip}`)
+      // Log failed login attempt
+      const ipAddress = (req.headers['x-forwarded-for'] as string) || req.ip
+      logLoginAttempt(email, false, ipAddress, req.headers['user-agent'])
       return res.status(401).json({ message: 'Invalid email or password' })
     }
 
     // Successful login - log it
     console.log(`[AUTH] Successful login: ${email}, IP: ${req.ip}`)
+
+    // Audit log successful login
+    const ipAddress = (req.headers['x-forwarded-for'] as string) || req.ip
+    logLoginAttempt(email, true, ipAddress, req.headers['user-agent'], user.id)
 
     // Generate token with role
     const token = jwt.sign({ userId: user.id, role: user.role }, process.env.JWT_SECRET!, {

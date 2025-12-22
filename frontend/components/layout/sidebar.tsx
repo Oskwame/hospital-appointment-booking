@@ -10,6 +10,7 @@ import {
   X,
   ChevronLeft,
   ChevronRight,
+  PenSquare,
 } from "lucide-react"
 import Image from "next/image"
 import { useState } from "react"
@@ -34,6 +35,7 @@ export function Sidebar({ open: defaultOpen, role: roleProp }: SidebarProps) {
     { icon: Calendar, label: "Appointments", href: "/appointments" },
     { icon: Users, label: "Doctors", href: "/doctors" },
     { icon: Stethoscope, label: "Services", href: "/services" },
+    { icon: PenSquare, label: "Blog", href: "/admin/blog" },
     { icon: FileText, label: "Reports", href: "/reports" },
   ]
   const doctorItems = [{ icon: Calendar, label: "Appointments", href: "/appointments" }]

@@ -6,6 +6,7 @@ import { useEffect, useState } from "react"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { useAuth } from "@/lib/auth-context"
+import { API_BASE_URL, getAuthHeaders } from "@/lib/api-config"
 
 export function ProfileSettings() {
   const { user, role } = useAuth()
@@ -29,7 +30,7 @@ export function ProfileSettings() {
     const run = async () => {
       try {
         const base = (process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000") + "/api"
-        const res = await fetch(`${base}/doctors/me`, { credentials: "include" })
+        const res = await fetch(`${base}/doctors/me`, { headers: getAuthHeaders() })
         if (res.ok) {
           const me = await res.json()
           setFormData((d) => ({
@@ -61,8 +62,7 @@ export function ProfileSettings() {
         const base = (process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000") + "/api"
         const res = await fetch(`${base}/auth/request-email-change-otp`, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
+          headers: { "Content-Type": "application/json", ...getAuthHeaders() },
           body: JSON.stringify({ newEmail: formData.email }),
         })
 
@@ -92,8 +92,7 @@ export function ProfileSettings() {
       // update email (and verify OTP if provided)
       const res = await fetch(`${base}/auth/profile`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
+        headers: { "Content-Type": "application/json", ...getAuthHeaders() },
         body: JSON.stringify({ email: formData.email, otp: otpCode }),
       })
 
@@ -106,8 +105,7 @@ export function ProfileSettings() {
       if (String(role || "").toLowerCase() === "doctor") {
         await fetch(`${base}/doctors/me`, {
           method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
+          headers: { "Content-Type": "application/json", ...getAuthHeaders() },
           body: JSON.stringify({
             name: formData.name,
             specialization: formData.specialization,
@@ -251,8 +249,7 @@ export function ProfileSettings() {
             try {
               await fetch(`${base}/auth/password`, {
                 method: "PUT",
-                headers: { "Content-Type": "application/json" },
-                credentials: "include",
+                headers: { "Content-Type": "application/json", ...getAuthHeaders() },
                 body: JSON.stringify({ currentPassword, newPassword }),
               })
               setSaved(true)
