@@ -79,9 +79,11 @@ app.use("/api/upload", uploadRoutes)
 // app.use("/api/blog", blogRoutes)
 
 
-const PORT = process.env.PORT || 5000
-app.listen(PORT, () => {
-  console.log(`✅ Server running on http://localhost:${PORT}`)
+const PORT = parseInt(process.env.PORT || '5000', 10)
+const HOST = '0.0.0.0' // Bind to all network interfaces for Railway
+
+app.listen(PORT, HOST, () => {
+  console.log(`✅ Server running on port ${PORT}`)
   if (!process.env.JWT_SECRET) {
     console.error(" CRITICAL: JWT_SECRET is missing in environment variables!")
   } else {
