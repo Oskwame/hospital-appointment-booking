@@ -1,9 +1,7 @@
-import { JSDOM } from 'jsdom'
-import DOMPurify from 'dompurify'
+import DOMPurify from 'isomorphic-dompurify'
 
-// Initialize DOMPurify with JSDOM for Node.js environment
-const window = new JSDOM('').window
-const purify = DOMPurify(window as any)
+// isomorphic-dompurify automatically handles Node.js environment
+const purify = DOMPurify
 
 /**
  * Sanitizes HTML content to prevent XSS attacks
