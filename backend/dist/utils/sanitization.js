@@ -6,11 +6,9 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.sanitizeHtml = sanitizeHtml;
 exports.sanitizeText = sanitizeText;
 exports.sanitizeBlogContent = sanitizeBlogContent;
-const jsdom_1 = require("jsdom");
-const dompurify_1 = __importDefault(require("dompurify"));
-// Initialize DOMPurify with JSDOM for Node.js environment
-const window = new jsdom_1.JSDOM('').window;
-const purify = (0, dompurify_1.default)(window);
+const isomorphic_dompurify_1 = __importDefault(require("isomorphic-dompurify"));
+// isomorphic-dompurify automatically handles Node.js environment
+const purify = isomorphic_dompurify_1.default;
 /**
  * Sanitizes HTML content to prevent XSS attacks
  * @param dirty - Untrusted HTML string

@@ -10,7 +10,7 @@ const email_service_1 = require("../services/email.service");
 const validators_1 = require("../utils/validators");
 const sanitization_1 = require("../utils/sanitization");
 const audit_service_1 = require("../services/audit.service");
-const index_1 = require("../index");
+const rateLimiters_1 = require("../middleware/rateLimiters");
 const router = express_1.default.Router();
 router.get('/', auth_1.default, async (req, res) => {
     try {
@@ -123,7 +123,7 @@ router.get('/me', auth_1.default, async (req, res) => {
         res.status(500).json({ message: 'Server error' });
     }
 });
-router.post('/', index_1.appointmentLimiter, async (req, res) => {
+router.post('/', rateLimiters_1.appointmentLimiter, async (req, res) => {
     try {
         const { name, email, gender, description, serviceId, date, session } = req.body;
         // Validate required fields

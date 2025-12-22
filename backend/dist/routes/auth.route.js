@@ -9,7 +9,6 @@ const prismaClient_1 = __importDefault(require("../prisma/prismaClient"));
 const bcryptjs_1 = __importDefault(require("bcryptjs"));
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const auth_1 = __importDefault(require("../middleware/auth"));
-const nodemailer_1 = __importDefault(require("nodemailer"));
 const express_rate_limit_1 = __importDefault(require("express-rate-limit"));
 const email_service_1 = require("../services/email.service");
 const audit_service_1 = require("../services/audit.service");
@@ -26,20 +25,6 @@ let hospitalSettings = {
     timezone: 'UTC-5',
     dataRetention: '2 years',
 };
-function createTransport() {
-    const host = process.env.SMTP_HOST;
-    const port = process.env.SMTP_PORT ? parseInt(process.env.SMTP_PORT) : undefined;
-    const user = process.env.SMTP_USER;
-    const pass = process.env.SMTP_PASS;
-    if (!host || !port || !user || !pass)
-        return null;
-    return nodemailer_1.default.createTransport({
-        host,
-        port,
-        secure: port === 465,
-        auth: { user, pass },
-    });
-}
 // Login-specific rate limiter - stricter limits for brute-force protection
 const loginLimiter = (0, express_rate_limit_1.default)({
     windowMs: 15 * 60 * 1000, // 15 minutes
