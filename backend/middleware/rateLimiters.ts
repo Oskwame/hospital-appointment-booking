@@ -1,4 +1,4 @@
-import rateLimit from 'express-rate-limit'
+import rateLimit, { Options } from 'express-rate-limit'
 
 // Rate limiter for public appointment endpoint
 export const appointmentLimiter = rateLimit({
@@ -7,10 +7,8 @@ export const appointmentLimiter = rateLimit({
     message: { message: 'Too many appointment requests. Please try again later.' },
     standardHeaders: true,
     legacyHeaders: false,
-    keyGenerator: (req) => {
-        // Use forwarded IP for proxy/load balancer scenarios
-        return (req.headers['x-forwarded-for'] as string) || req.ip || 'unknown'
-    },
+    // Use default keyGenerator which properly handles IPv6 addresses
+    // If behind a proxy, ensure 'trust proxy' is set in Express
     handler: (req, res) => {
         const ip = req.headers['x-forwarded-for'] || req.ip
         console.warn(`[SECURITY] Rate limit exceeded for appointments - IP: ${ip}`)

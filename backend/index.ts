@@ -10,9 +10,8 @@ import postsRoutes from "./routes/posts.route"
 import servicesRoutes from "./routes/services.route"
 import doctorsRoutes from "./routes/doctors.route"
 import appointmentsRoutes from "./routes/appointments.route"
-// import datesRoutes from "./routes/dates.route" // Disabled - AvailableDate model removed
 import reportsRoutes from "./routes/reports.route"
-// blog feature temporarily disabled
+
 
 
 dotenv.config()
@@ -70,13 +69,11 @@ app.use("/api/posts", postsRoutes)
 app.use("/api/services", servicesRoutes)
 app.use("/api/doctors", doctorsRoutes)
 app.use("/api/appointments", appointmentsRoutes)
-// app.use("/api/dates", datesRoutes) // Disabled - AvailableDate model removed
 app.use("/api/reports", reportsRoutes)
 
 import uploadRoutes from "./routes/upload.route"
 
 app.use("/api/upload", uploadRoutes)
-// app.use("/api/blog", blogRoutes)
 
 
 const PORT = parseInt(process.env.PORT || '5000', 10)

@@ -151,7 +151,7 @@ router.post('/users/request-otp', auth_1.default, async (req, res) => {
             await (0, email_service_1.sendOTP)(email, code, 10);
         }
         catch (emailError) {
-            console.log('[DEV] OTP for', email, 'is', code);
+            // console.log('[DEV] OTP for', email, 'is', code)
             console.error('Failed to send OTP email:', emailError);
         }
         return res.json({ message: 'OTP sent' });
@@ -329,7 +329,7 @@ router.post('/request-email-change-otp', auth_1.default, async (req, res) => {
             await (0, email_service_1.sendOTP)(newEmail, code, 10);
         }
         catch (emailError) {
-            console.log('[DEV] Email Change OTP for', newEmail, 'is', code);
+            // console.log('[DEV] Email Change OTP for', newEmail, 'is', code)
             console.error('Failed to send email change OTP:', emailError);
         }
         res.json({ message: 'OTP sent' });

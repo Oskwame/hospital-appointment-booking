@@ -14,9 +14,7 @@ const posts_route_1 = __importDefault(require("./routes/posts.route"));
 const services_route_1 = __importDefault(require("./routes/services.route"));
 const doctors_route_1 = __importDefault(require("./routes/doctors.route"));
 const appointments_route_1 = __importDefault(require("./routes/appointments.route"));
-// import datesRoutes from "./routes/dates.route" // Disabled - AvailableDate model removed
 const reports_route_1 = __importDefault(require("./routes/reports.route"));
-// blog feature temporarily disabled
 dotenv_1.default.config();
 const app = (0, express_1.default)();
 // Serve static files - moved before CORS to allow public access
@@ -61,11 +59,9 @@ app.use("/api/posts", posts_route_1.default);
 app.use("/api/services", services_route_1.default);
 app.use("/api/doctors", doctors_route_1.default);
 app.use("/api/appointments", appointments_route_1.default);
-// app.use("/api/dates", datesRoutes) // Disabled - AvailableDate model removed
 app.use("/api/reports", reports_route_1.default);
 const upload_route_1 = __importDefault(require("./routes/upload.route"));
 app.use("/api/upload", upload_route_1.default);
-// app.use("/api/blog", blogRoutes)
 const PORT = parseInt(process.env.PORT || '5000', 10);
 const HOST = '0.0.0.0'; // Bind to all network interfaces for Railway
 app.listen(PORT, HOST, () => {

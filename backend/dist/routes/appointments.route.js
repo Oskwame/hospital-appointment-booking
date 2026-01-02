@@ -268,9 +268,6 @@ router.patch('/:id', auth_1.default, async (req, res) => {
             // Send email if status changed to confirmed
             if (status === 'confirmed' && appointment.status !== 'confirmed') {
                 console.log('📧 Doctor approved appointment, preparing to send email...');
-                console.log('Previous status:', appointment.status);
-                console.log('New status:', status);
-                console.log('Recipient email:', updated.email);
                 const time = updated.appointmentDate.toLocaleTimeString('en-US', {
                     hour: 'numeric',
                     minute: '2-digit',
@@ -309,9 +306,6 @@ router.patch('/:id', auth_1.default, async (req, res) => {
             // Send email if status changed to confirmed
             if (status === 'confirmed' && appointment.status !== 'confirmed') {
                 console.log('📧 Status changed to confirmed, preparing to send email...');
-                console.log('Previous status:', appointment.status);
-                console.log('New status:', status);
-                console.log('Recipient email:', updated.email);
                 const time = updated.appointmentDate.toLocaleTimeString('en-US', {
                     hour: 'numeric',
                     minute: '2-digit',
@@ -326,7 +320,7 @@ router.patch('/:id', auth_1.default, async (req, res) => {
                 });
             }
             else {
-                console.log('ℹ️ Email not triggered. Status:', status, '| Previous:', appointment.status);
+                // console.log('ℹ️ Email not triggered. Status:', status, '| Previous:', appointment.status)
             }
             return res.json({
                 id: updated.id,
