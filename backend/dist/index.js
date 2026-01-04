@@ -23,7 +23,7 @@ app.use('/uploads', express_1.default.static(path_1.default.join(__dirname, 'upl
 const allowedOrigins = [
     'http://localhost:3000',
     'http://localhost:3001',
-    'http://165.22.151.170', // your server IP
+    'http://165.22.151.170:3000', // your server IP
     process.env.CLIENT_URL, // optional: your domain, e.g., https://kasa.example.com
 ].filter(Boolean); // removes undefined if CLIENT_URL is not set
 app.use((0, cors_1.default)({
