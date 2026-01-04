@@ -19,28 +19,26 @@ dotenv_1.default.config();
 const app = (0, express_1.default)();
 // Serve static files - moved before CORS to allow public access
 app.use('/uploads', express_1.default.static(path_1.default.join(__dirname, 'uploads')));
-// Dynamic CORS
+// Dynamic CORS - production-ready
 const allowedOrigins = [
     'http://localhost:3000',
     'http://localhost:3001',
-    process.env.CLIENT_URL,
-    'https://hospital-appointment-front-production.up.railway.app'
-];
-// CORS configuration with origin validation
+    'http://165.22.151.170', // your server IP
+    process.env.CLIENT_URL, // optional: your domain, e.g., https://kasa.example.com
+].filter(Boolean); // removes undefined if CLIENT_URL is not set
 app.use((0, cors_1.default)({
     origin: (origin, callback) => {
-        // Allow requests with no origin (e.g., mobile apps, Postman)
+        // Allow requests with no origin (e.g., Postman, mobile apps)
         if (!origin)
             return callback(null, true);
-        // Check if origin is in allowed list
         if (allowedOrigins.includes(origin)) {
             return callback(null, true);
         }
-        // Log and reject unauthorized origin
+        // Reject unauthorized origins
         console.warn(`[SECURITY] CORS rejected unauthorized origin: ${origin}`);
         return callback(new Error('CORS policy violation - unauthorized origin'));
     },
-    credentials: true
+    credentials: true, // allow cookies and auth headers
 }));
 // Security Middleware
 app.use((0, helmet_1.default)({ crossOriginResourcePolicy: { policy: "cross-origin" } }));
