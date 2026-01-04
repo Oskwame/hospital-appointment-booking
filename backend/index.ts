@@ -20,29 +20,28 @@ const app = express()
 // Serve static files - moved before CORS to allow public access
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')))
 
-// Dynamic CORS
+// Dynamic CORS - production-ready
 const allowedOrigins = [
   'http://localhost:3000',
   'http://localhost:3001',
-  process.env.CLIENT_URL,
-];
+  'http://165.22.151.170', // your server IP
+  process.env.CLIENT_URL,   // optional: your domain, e.g., https://kasa.example.com
+].filter(Boolean); // removes undefined if CLIENT_URL is not set
 
-// CORS configuration with origin validation
 app.use(cors({
   origin: (origin, callback) => {
-    // Allow requests with no origin (e.g., mobile apps, Postman)
+    // Allow requests with no origin (e.g., Postman, mobile apps)
     if (!origin) return callback(null, true);
 
-    // Check if origin is in allowed list
     if (allowedOrigins.includes(origin)) {
       return callback(null, true);
     }
 
-    // Log and reject unauthorized origin
+    // Reject unauthorized origins
     console.warn(`[SECURITY] CORS rejected unauthorized origin: ${origin}`);
     return callback(new Error('CORS policy violation - unauthorized origin'));
   },
-  credentials: true
+  credentials: true, // allow cookies and auth headers
 }));
 
 // Security Middleware
