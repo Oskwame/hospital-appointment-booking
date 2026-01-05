@@ -25,12 +25,12 @@ const UserProfile = ({ user: initialUser }: UserProfileProps) => {
     try {
       setLoading(true);
       // First check role via auth/me if we don't know it
-      const authRes = await fetch(`${API_BASE_URL}/auth/me`, { headers: getAuthHeaders() });
+      const authRes = await fetch(`${API_BASE_URL}/api/auth/me`, { headers: getAuthHeaders() });
       if (authRes.ok) {
         const authData = await authRes.json();
         if (authData.role === 'DOCTOR') {
           // Fetch doctor details
-          const docRes = await fetch(`${API_BASE_URL}/doctors/me`, { headers: getAuthHeaders() });
+          const docRes = await fetch(`${API_BASE_URL}/api/doctors/me`, { headers: getAuthHeaders() });
           if (docRes.ok) {
             const docData = await docRes.json();
             setDoctorData(docData);
@@ -54,7 +54,7 @@ const UserProfile = ({ user: initialUser }: UserProfileProps) => {
 
   const handleLogout = async () => {
     try {
-      await fetch(`${API_BASE_URL}/auth/logout`, {
+      await fetch(`${API_BASE_URL}/api/auth/logout`, {
         method: "POST",
         headers: getAuthHeaders(),
       });

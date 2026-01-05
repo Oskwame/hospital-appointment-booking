@@ -66,7 +66,7 @@ export function AppointmentDetail({ appointment, onClose, role, onStatusUpdated 
     if (isAdmin && showReassign) {
       const fetchDoctors = async () => {
         try {
-          const res = await fetch(`${API_BASE_URL}/doctors`, {
+          const res = await fetch(`${API_BASE_URL}/api/doctors`, {
             headers: getAuthHeaders()
           })
           if (res.ok) {
@@ -89,7 +89,7 @@ export function AppointmentDetail({ appointment, onClose, role, onStatusUpdated 
     setError(null)
     setUpdating(true)
     try {
-      const res = await fetch(`${API_BASE_URL}/appointments/${appointment.id}`, {
+      const res = await fetch(`${API_BASE_URL}/api/appointments/${appointment.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json", ...getAuthHeaders() },
         body: JSON.stringify({ doctorId: parseInt(selectedDoctorId) }),
@@ -113,7 +113,7 @@ export function AppointmentDetail({ appointment, onClose, role, onStatusUpdated 
     setError(null)
     setUpdating(true)
     try {
-      const res = await fetch(`${API_BASE_URL}/appointments/${appointment.id}`, {
+      const res = await fetch(`${API_BASE_URL}/api/appointments/${appointment.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json", ...getAuthHeaders() },
         body: JSON.stringify({ status: newStatus }),

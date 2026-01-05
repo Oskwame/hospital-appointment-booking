@@ -50,7 +50,7 @@ export function AddUserForm({ open, onOpenChange, onCreated }: AddUserFormProps)
     setError(null)
     setSendingOtp(true)
     try {
-      const res = await fetch(`${API_BASE_URL}/auth/users/request-otp`, {
+      const res = await fetch(`${API_BASE_URL}/api/auth/users/request-otp`, {
         method: "POST",
         headers: { "Content-Type": "application/json", ...getAuthHeaders() },
         body: JSON.stringify({ email }),
@@ -77,7 +77,7 @@ export function AddUserForm({ open, onOpenChange, onCreated }: AddUserFormProps)
     setError(null)
     setSaving(true)
     try {
-      const res = await fetch(`${API_BASE_URL}/auth/users`, {
+      const res = await fetch(`${API_BASE_URL}/api/auth/users`, {
         method: "POST",
         headers: { "Content-Type": "application/json", ...getAuthHeaders() },
         body: JSON.stringify({ email, password, role: role.toUpperCase(), otp }),

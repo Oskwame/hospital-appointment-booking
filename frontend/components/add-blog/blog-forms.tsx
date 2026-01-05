@@ -57,7 +57,7 @@ export function BlogForm({ initialData, onSave }: BlogFormProps) {
     const formData = new FormData()
     formData.append('image', file)
 
-    const res = await fetch(`${API_BASE_URL}/upload`, {
+    const res = await fetch(`${API_BASE_URL}/api/upload`, {
       method: 'POST',
       body: formData
     })

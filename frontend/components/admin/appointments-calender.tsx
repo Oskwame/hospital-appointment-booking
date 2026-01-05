@@ -54,7 +54,7 @@ export function AppointmentsCalendar() {
   const fetchAppointments = useCallback(async () => {
     try {
       setLoading(true)
-      const res = await fetch(`${API_BASE_URL}/appointments`, { headers: getAuthHeaders() })
+      const res = await fetch(`${API_BASE_URL}/api/appointments`, { headers: getAuthHeaders() })
       if (res.ok) {
         const data = await res.json()
         setAppointments(data)

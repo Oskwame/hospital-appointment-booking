@@ -49,7 +49,7 @@ export function EditUserForm({ open, onOpenChange, user, onUpdated }: EditUserFo
         setError(null)
         setSaving(true)
         try {
-            const res = await fetch(`${API_BASE_URL}/auth/users/${user.id}`, {
+            const res = await fetch(`${API_BASE_URL}/api/auth/users/${user.id}`, {
                 method: "PATCH",
                 headers: { "Content-Type": "application/json", ...getAuthHeaders() },
                 body: JSON.stringify({ email, password, role: role.toUpperCase() }),

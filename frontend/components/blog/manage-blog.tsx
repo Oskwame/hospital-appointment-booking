@@ -32,7 +32,7 @@ export function BlogManager() {
     const fetchBlogs = async () => {
         try {
             setLoading(true)
-            const res = await fetch(`${API_BASE_URL}/posts`, { headers: getAuthHeaders() })
+            const res = await fetch(`${API_BASE_URL}/api/posts`, { headers: getAuthHeaders() })
             if (!res.ok) throw new Error("Failed to fetch blogs")
             const data = await res.json()
             setBlogs(data)
@@ -56,7 +56,7 @@ export function BlogManager() {
                 image_url: data.image
             }
 
-            const res = await fetch(`${API_BASE_URL}/posts`, {
+            const res = await fetch(`${API_BASE_URL}/api/posts`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json", ...getAuthHeaders() },
                 body: JSON.stringify(payload),
@@ -81,7 +81,7 @@ export function BlogManager() {
                 image_url: data.image
             }
 
-            const res = await fetch(`${API_BASE_URL}/posts/${editingBlog.id}`, {
+            const res = await fetch(`${API_BASE_URL}/api/posts/${editingBlog.id}`, {
                 method: "PUT",
                 headers: { "Content-Type": "application/json", ...getAuthHeaders() },
                 body: JSON.stringify(payload),
@@ -100,7 +100,7 @@ export function BlogManager() {
     const handleDelete = async (id: number) => {
         if (!confirm("Are you sure you want to delete this post?")) return
         try {
-            const res = await fetch(`${API_BASE_URL}/posts/${id}`, {
+            const res = await fetch(`${API_BASE_URL}/api/posts/${id}`, {
                 method: "DELETE",
                 headers: getAuthHeaders(),
             })
