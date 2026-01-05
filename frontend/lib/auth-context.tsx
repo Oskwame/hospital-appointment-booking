@@ -1,4 +1,5 @@
 "use client"
+
 import { createContext, useContext, useEffect, useState, useCallback } from "react"
 import { API_BASE_URL } from "./api-config"
 
@@ -12,13 +13,24 @@ interface AuthState {
   logout: () => void
 }
 
-const AuthContext = createContext<AuthState>({ user: null, role: null, loading: true, login: () => { }, logout: () => { } })
+const AuthContext = createContext<AuthState>({
+  user: null,
+  role: null,
+  loading: true,
+  login: () => { },
+  logout: () => { },
+})
 
-// Token refresh interval (20 hours - before 24h expiration)
-const REFRESH_INTERVAL = 20 * 60 * 60 * 1000
+const REFRESH_INTERVAL = 20 * 60 * 60 * 1000 // 20 hours
+
+const API_AUTH_BASE = `${API_BASE_URL}/api/auth`
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [state, setState] = useState<Omit<AuthState, "login" | "logout">>({ user: null, role: null, loading: true })
+  const [state, setState] = useState<Omit<AuthState, "login" | "logout">>({
+    user: null,
+    role: null,
+    loading: true,
+  })
 
   const fetchMe = useCallback(async () => {
     try {
@@ -28,32 +40,37 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return false
       }
 
-      const base = API_BASE_URL
-      const res = await fetch(`${base}/auth/me`, {
+      const res = await fetch(`${API_AUTH_BASE}/me`, {
         headers: {
-          "Authorization": `Bearer ${token}`
-        }
+          Authorization: `Bearer ${token}`,
+        },
       })
-      if (res.ok) {
-        const data = await res.json()
-        const r = String(data.role || "ADMIN").toLowerCase()
-        const role: Role = r === "doctor" ? "doctor" : r === "superadmin" ? "superadmin" : "admin"
-        setState({ user: data, role, loading: false })
-        return true
-      } else {
+
+      if (!res.ok) {
         setState({ user: null, role: null, loading: false })
         return false
       }
+
+      const data = await res.json()
+      const r = String(data.role || "admin").toLowerCase()
+      const role: Role =
+        r === "doctor" ? "doctor" : r === "superadmin" ? "superadmin" : "admin"
+
+      setState({ user: data, role, loading: false })
+      return true
     } catch {
       setState({ user: null, role: null, loading: false })
       return false
     }
   }, [])
 
-  const login = useCallback(async (token: string) => {
-    localStorage.setItem("token", token)
-    await fetchMe()
-  }, [fetchMe])
+  const login = useCallback(
+    async (token: string) => {
+      localStorage.setItem("token", token)
+      await fetchMe()
+    },
+    [fetchMe]
+  )
 
   const logout = useCallback(() => {
     localStorage.removeItem("token")
@@ -65,52 +82,51 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const token = localStorage.getItem("token")
       if (!token) return false
 
-      const res = await fetch(`${API_BASE_URL}/auth/refresh`, {
+      const res = await fetch(`${API_AUTH_BASE}/refresh`, {
         method: "POST",
         headers: {
-          "Authorization": `Bearer ${token}`
-        }
+          Authorization: `Bearer ${token}`,
+        },
       })
-      if (res.ok) {
-        const data = await res.json()
-        if (data.token) {
-          localStorage.setItem("token", data.token)
-        }
-        console.log("[AUTH] Token refreshed successfully")
-        return true
+
+      if (!res.ok) return false
+
+      const data = await res.json()
+      if (data.token) {
+        localStorage.setItem("token", data.token)
       }
-      return false
+
+      return true
     } catch {
       return false
     }
   }, [])
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchMe()
   }, [fetchMe])
 
-  // Set up automatic token refresh
   useEffect(() => {
     if (!state.user) return
 
-    // Refresh token periodically (every 20 hours)
-    const intervalId = setInterval(async () => {
-      const success = await refreshToken()
-      if (!success) {
-        // If refresh fails, try to fetch user (might redirect to login)
-        await fetchMe()
-      }
+    const id = setInterval(async () => {
+      const ok = await refreshToken()
+      if (!ok) await fetchMe()
     }, REFRESH_INTERVAL)
 
-    return () => clearInterval(intervalId)
+    return () => clearInterval(id)
   }, [state.user, refreshToken, fetchMe])
 
-  return <AuthContext.Provider value={{ ...state, login, logout }}>{children}</AuthContext.Provider>
+  return (
+    <AuthContext.Provider value={{ ...state, login, logout }}>
+      {children}
+    </AuthContext.Provider>
+  )
 }
 
 export function useAuth() {
   return useContext(AuthContext)
 }
+
 
 
