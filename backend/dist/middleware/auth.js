@@ -7,9 +7,7 @@ exports.default = auth;
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 function auth(req, res, next) {
     const header = req.headers.authorization || "";
-    const bearer = header.startsWith("Bearer ") ? header.slice(7) : null;
-    const cookieToken = req.cookies?.token || null;
-    const token = bearer || cookieToken;
+    const token = header.startsWith("Bearer ") ? header.slice(7) : null;
     if (!token) {
         return res.status(401).json({ message: "Unauthorized" });
     }

@@ -91,11 +91,9 @@ router.post('/logout', (_req, res) => {
 // POST /api/auth/refresh - Refresh access token
 router.post('/refresh', async (req, res) => {
     try {
-        // Get token from cookie or header
+        // Get token from Authorization header
         const header = req.headers.authorization || '';
-        const bearer = header.startsWith('Bearer ') ? header.slice(7) : null;
-        const cookieToken = req.cookies?.token || null;
-        const token = bearer || cookieToken;
+        const token = header.startsWith('Bearer ') ? header.slice(7) : null;
         if (!token) {
             return res.status(401).json({ message: 'No token provided' });
         }
