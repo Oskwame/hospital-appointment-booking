@@ -1,6 +1,5 @@
 export const API_BASE_URL =
-    process.env.NEXT_PUBLIC_API_URL ||
-    "https://hospital-appiontment-backend.up.railway.app/api";
+    process.env.NEXT_PUBLIC_API_BASE_URL || "";
 
 export const getAuthToken = () => {
     if (typeof window !== "undefined") {
