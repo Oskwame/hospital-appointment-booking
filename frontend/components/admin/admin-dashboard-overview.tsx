@@ -40,11 +40,11 @@ export function AdminDashboardOverview() {
             const base = API_BASE_URL
 
             // Fetch appointments
-            const appointmentsRes = await fetch(`${base}/appointments`, { headers: getAuthHeaders() })
+            const appointmentsRes = await fetch(`${base}/api/appointments`, { headers: getAuthHeaders() })
             const appointments = await appointmentsRes.json()
 
             // Fetch doctors
-            const doctorsRes = await fetch(`${base}/doctors`, { headers: getAuthHeaders() })
+            const doctorsRes = await fetch(`${base}/api/doctors`, { headers: getAuthHeaders() })
             const doctors = await doctorsRes.json()
 
             // Calculate metrics

@@ -48,8 +48,8 @@ export function DoctorsManager() {
       try {
         const base = API_BASE_URL
         const [doctorsRes, servicesRes] = await Promise.all([
-          fetch(`${base}/doctors`, { headers: getAuthHeaders() }),
-          fetch(`${base}/services`, { headers: getAuthHeaders() })
+          fetch(`${base}/api/doctors`, { headers: getAuthHeaders() }),
+          fetch(`${base}/api/services`, { headers: getAuthHeaders() })
         ])
         const doctorsData = await doctorsRes.json()
         const servicesData = await servicesRes.json()
@@ -98,7 +98,7 @@ export function DoctorsManager() {
     if (!form.name || !form.specialization || !form.email || !form.phone || !form.service) return
     try {
       const base = API_BASE_URL
-      const res = await fetch(`${base}/doctors`, {
+      const res = await fetch(`${base}/api/doctors`, {
         method: "POST",
         headers: { "Content-Type": "application/json", ...getAuthHeaders() },
         body: JSON.stringify(form),
@@ -392,7 +392,7 @@ export function DoctorsManager() {
                         try {
                           setSaving(true)
                           const base = API_BASE_URL
-                          const res = await fetch(`${base}/doctors/${selected.id}`, {
+                          const res = await fetch(`${base}/api/doctors/${selected.id}`, {
                             method: "PUT",
                             headers: { "Content-Type": "application/json", ...getAuthHeaders() },
                             body: JSON.stringify(edit),

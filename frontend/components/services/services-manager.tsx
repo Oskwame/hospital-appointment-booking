@@ -31,7 +31,7 @@ export function ServicesManager() {
   const fetchServices = async () => {
     try {
       const base = API_BASE_URL
-      const res = await fetch(`${base}/services`, { headers: getAuthHeaders() })
+      const res = await fetch(`${base}/api/services`, { headers: getAuthHeaders() })
       const data = await res.json()
       setServices(
         (data as any[]).map((s) => ({
@@ -53,7 +53,7 @@ export function ServicesManager() {
   const handleAddService = async (serviceData: Omit<Service, "id">) => {
     try {
       const base = API_BASE_URL
-      const res = await fetch(`${base}/services`, {
+      const res = await fetch(`${base}/api/services`, {
         method: "POST",
         headers: { "Content-Type": "application/json", ...getAuthHeaders() },
         body: JSON.stringify({
@@ -86,7 +86,7 @@ export function ServicesManager() {
     if (editingId === null) return
     try {
       const base = API_BASE_URL
-      const res = await fetch(`${base}/services/${editingId}`, {
+      const res = await fetch(`${base}/api/services/${editingId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json", ...getAuthHeaders() },
         body: JSON.stringify({
@@ -122,7 +122,7 @@ export function ServicesManager() {
     if (!confirm("Are you sure you want to delete this service?")) return
     try {
       const base = API_BASE_URL
-      await fetch(`${base}/services/${id}`, { method: "DELETE", headers: getAuthHeaders() })
+      await fetch(`${base}/api/services/${id}`, { method: "DELETE", headers: getAuthHeaders() })
       setServices(services.filter((s) => s.id !== id))
     } catch (error) {
       console.error("[v0] Failed to delete service:", error)

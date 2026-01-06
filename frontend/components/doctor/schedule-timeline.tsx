@@ -32,7 +32,7 @@ export function ScheduleTimeline() {
   const fetchAppointments = useCallback(async () => {
     try {
       const base = API_BASE_URL
-      const res = await fetch(`${base}/appointments/me`, {
+      const res = await fetch(`${base}/api/appointments/me`, {
         headers: getAuthHeaders(),
       })
       if (res.ok) {

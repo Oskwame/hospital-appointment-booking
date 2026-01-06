@@ -88,12 +88,12 @@ export function ReportsAnalytics() {
 
     try {
       const [overviewRes, servicesRes, workloadRes, cancellationsRes, peakRes, patientsRes] = await Promise.all([
-        fetch(`${base}/reports/overview?${params}`, { headers: getAuthHeaders() }),
-        fetch(`${base}/reports/appointments-by-service?${params}`, { headers: getAuthHeaders() }),
-        fetch(`${base}/reports/doctor-workload?${params}`, { headers: getAuthHeaders() }),
-        fetch(`${base}/reports/cancellations?${params}`, { headers: getAuthHeaders() }),
-        fetch(`${base}/reports/peak-hours?${params}`, { headers: getAuthHeaders() }),
-        fetch(`${base}/reports/new-patients`, { headers: getAuthHeaders() })
+        fetch(`${base}/api/reports/overview?${params}`, { headers: getAuthHeaders() }),
+        fetch(`${base}/api/reports/appointments-by-service?${params}`, { headers: getAuthHeaders() }),
+        fetch(`${base}/api/reports/doctor-workload?${params}`, { headers: getAuthHeaders() }),
+        fetch(`${base}/api/reports/cancellations?${params}`, { headers: getAuthHeaders() }),
+        fetch(`${base}/api/reports/peak-hours?${params}`, { headers: getAuthHeaders() }),
+        fetch(`${base}/api/reports/new-patients`, { headers: getAuthHeaders() })
       ])
 
       if (overviewRes.ok) setOverview(await overviewRes.json())

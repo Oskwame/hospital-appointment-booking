@@ -59,7 +59,7 @@ export function AppointmentDetailDialog({
         setUpdating(true)
         try {
             const base = API_BASE_URL
-            const res = await fetch(`${base}/appointments/${appointment.id}`, {
+            const res = await fetch(`${base}/api/appointments/${appointment.id}`, {
                 method: "PATCH",
                 headers: { "Content-Type": "application/json", ...getAuthHeaders() },
                 body: JSON.stringify({ status: newStatus }),

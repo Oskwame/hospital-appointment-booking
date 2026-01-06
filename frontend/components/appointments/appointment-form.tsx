@@ -32,7 +32,7 @@ export function AppointmentForm({ appointment, onClose, onCreated }: Appointment
     const run = async () => {
       try {
         const base = API_BASE_URL
-        const res = await fetch(`${base}/services`, { headers: getAuthHeaders() })
+        const res = await fetch(`${base}/api/services`, { headers: getAuthHeaders() })
         const data = await res.json()
         setServices(
           (data as any[]).map((s) => ({
@@ -59,7 +59,7 @@ export function AppointmentForm({ appointment, onClose, onCreated }: Appointment
 
     try {
       const base = API_BASE_URL
-      const res = await fetch(`${base}/appointments`, {
+      const res = await fetch(`${base}/api/appointments`, {
         method: "POST",
         headers: { "Content-Type": "application/json", ...getAuthHeaders() },
         body: JSON.stringify({

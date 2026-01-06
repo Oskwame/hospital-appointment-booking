@@ -29,8 +29,8 @@ export function SystemSettings() {
     const fetchAll = async () => {
       try {
         const [prefsRes, hospRes] = await Promise.all([
-          fetch(`${base}/auth/preferences`, { headers: getAuthHeaders() }),
-          r === 'superadmin' ? fetch(`${base}/auth/hospital`, { headers: getAuthHeaders() }) : Promise.resolve(null as any),
+          fetch(`${base}/api/auth/preferences`, { headers: getAuthHeaders() }),
+          r === 'superadmin' ? fetch(`${base}/api/auth/hospital`, { headers: getAuthHeaders() }) : Promise.resolve(null as any),
         ])
         if (prefsRes?.ok) {
           const prefs = await prefsRes.json()
@@ -57,7 +57,7 @@ export function SystemSettings() {
     setError(null)
     try {
       const base = API_BASE_URL
-      await fetch(`${base}/auth/preferences`, {
+      await fetch(`${base}/api/auth/preferences`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
         body: JSON.stringify({ autoApproval: settings.autoApproval, emailNotifications: settings.emailNotifications }),
@@ -73,7 +73,7 @@ export function SystemSettings() {
     setError(null)
     try {
       const base = API_BASE_URL
-      await fetch(`${base}/auth/hospital`, {
+      await fetch(`${base}/api/auth/hospital`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
         body: JSON.stringify({

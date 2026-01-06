@@ -23,7 +23,7 @@ export function UserManagement() {
   const reload = useCallback(async () => {
     try {
       const base = API_BASE_URL
-      const endpoint = showDeactivated ? `${base}/auth/users/deactivated` : `${base}/auth/users`
+      const endpoint = showDeactivated ? `${base}/api/auth/users/deactivated` : `${base}/api/auth/users`
       const res = await fetch(endpoint, { headers: getAuthHeaders() })
       if (res.ok) {
         const data = await res.json()
@@ -50,7 +50,7 @@ export function UserManagement() {
 
     try {
       const base = API_BASE_URL
-      const res = await fetch(`${base}/auth/users/${userId}`, {
+      const res = await fetch(`${base}/api/auth/users/${userId}`, {
         method: "DELETE",
         headers: getAuthHeaders(),
       })
@@ -69,7 +69,7 @@ export function UserManagement() {
   const handleActivateUser = async (userId: number) => {
     try {
       const base = API_BASE_URL
-      const res = await fetch(`${base}/auth/users/${userId}/restore`, {
+      const res = await fetch(`${base}/api/auth/users/${userId}/restore`, {
         method: "PATCH",
         headers: getAuthHeaders(),
       })

@@ -17,7 +17,7 @@ const ServiceCards: React.FC = () => {
     const fetchStats = async () => {
       try {
         const base = API_BASE_URL
-        const res = await fetch(`${base}/stats`, { cache: "no-store", headers: getAuthHeaders() });
+        const res = await fetch(`${base}/api/stats`, { cache: "no-store", headers: getAuthHeaders() });
         const data = await res.json();
 
         setStats({

@@ -43,17 +43,17 @@ export function DashboardOverview() {
 
             // Fetch appointments
             // Fetch appointments
-            const appointmentsRes = await fetch(`${base}/appointments`, { headers: getAuthHeaders() })
+            const appointmentsRes = await fetch(`${base}/api/appointments`, { headers: getAuthHeaders() })
             const appointments = await appointmentsRes.json()
 
             // Fetch doctors
             // Fetch doctors
-            const doctorsRes = await fetch(`${base}/doctors`, { headers: getAuthHeaders() })
+            const doctorsRes = await fetch(`${base}/api/doctors`, { headers: getAuthHeaders() })
             const doctors = await doctorsRes.json()
 
             // Fetch services
             // Fetch services
-            const servicesRes = await fetch(`${base}/services`, { headers: getAuthHeaders() })
+            const servicesRes = await fetch(`${base}/api/services`, { headers: getAuthHeaders() })
             const services = await servicesRes.json()
 
             const pending = appointments.filter((a: any) => a.status === 'pending').length

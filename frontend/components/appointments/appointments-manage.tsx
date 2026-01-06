@@ -44,10 +44,10 @@ export function AppointmentsManager() {
     try {
       const r = String(role || '').toLowerCase()
       // Use /me endpoint for doctors to get only their appointments
-      const appointmentsEndpoint = r === 'doctor' ? `${base}/appointments/me` : `${base}/appointments`
+      const appointmentsEndpoint = r === 'doctor' ? `${base}/api/appointments/me` : `${base}/api/appointments`
 
       const [servicesRes, apptRes] = await Promise.all([
-        fetch(`${base}/services`, { headers: getAuthHeaders() }),
+        fetch(`${base}/api/services`, { headers: getAuthHeaders() }),
         fetch(appointmentsEndpoint, { headers: getAuthHeaders() }),
       ])
       const servicesData = await servicesRes.json()

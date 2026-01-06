@@ -41,7 +41,7 @@ export default function UsersPage() {
       setLoading(true)
       setError(null)
       const base = API_BASE_URL
-      const endpoint = showDeactivated ? `${base}/auth/users/deactivated` : `${base}/auth/users`
+      const endpoint = showDeactivated ? `${base}/api/auth/users/deactivated` : `${base}/api/auth/users`
       const res = await fetch(endpoint, {
         headers: getAuthHeaders(),
       })
@@ -71,7 +71,7 @@ export default function UsersPage() {
     try {
       setDeleting(true)
       const base = API_BASE_URL
-      const res = await fetch(`${base}/auth/users/${deleteUser.id}`, {
+      const res = await fetch(`${base}/api/auth/users/${deleteUser.id}`, {
         method: "DELETE",
         headers: getAuthHeaders(),
       })
@@ -95,7 +95,7 @@ export default function UsersPage() {
   const handleReactivate = async (userId: number) => {
     try {
       const base = API_BASE_URL
-      const res = await fetch(`${base}/auth/users/${userId}/restore`, {
+      const res = await fetch(`${base}/api/auth/users/${userId}/restore`, {
         method: "PATCH",
         headers: getAuthHeaders(),
       })

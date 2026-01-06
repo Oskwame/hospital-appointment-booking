@@ -29,7 +29,7 @@ export function SuperAdminAppointmentsTable() {
     const fetchAppointments = async () => {
         try {
             const base = API_BASE_URL
-            const res = await fetch(`${base}/appointments`, { headers: getAuthHeaders() })
+            const res = await fetch(`${base}/api/appointments`, { headers: getAuthHeaders() })
 
             if (!res.ok) {
                 throw new Error("Failed to fetch appointments")

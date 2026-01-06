@@ -22,7 +22,7 @@ export function DoctorProfile() {
     const fetchDoctor = async () => {
       try {
         const base = API_BASE_URL
-        const res = await fetch(`${base}/doctors/me`, {
+        const res = await fetch(`${base}/api/doctors/me`, {
           headers: getAuthHeaders(),
         })
         if (res.ok) {
