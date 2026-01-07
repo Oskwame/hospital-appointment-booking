@@ -38,6 +38,9 @@ app.use((0, cors_1.default)({
             return callback(null, true); // Postman, mobile apps
         if (allowedOrigins.includes(origin))
             return callback(null, true);
+        // Allow any Railway subdomain for preview deployments
+        if (origin.endsWith(".up.railway.app"))
+            return callback(null, true);
         console.warn(`[SECURITY] CORS rejected unauthorized origin: ${origin}`);
         return callback(new Error("CORS policy violation - unauthorized origin"));
     },

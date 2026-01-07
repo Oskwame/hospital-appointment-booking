@@ -21,7 +21,7 @@ const AuthContext = createContext<AuthState>({
   logout: () => { },
 })
 
-const REFRESH_INTERVAL = 20 * 60 * 60 * 1000 // 20 hours
+const REFRESH_INTERVAL = 150 * 60 * 1000 // 2.5 hours
 
 const API_AUTH_BASE = `${API_BASE_URL}/api/auth`
 

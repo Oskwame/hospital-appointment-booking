@@ -74,7 +74,7 @@ router.post('/login', loginLimiter, async (req, res) => {
         (0, audit_service_1.logLoginAttempt)(email, true, ipAddress, req.headers['user-agent'], user.id);
         // Generate token with role
         const token = jsonwebtoken_1.default.sign({ userId: user.id, role: user.role }, process.env.JWT_SECRET, {
-            expiresIn: '1d',
+            expiresIn: '3h',
         });
         // Cookie setting removed for header-based auth
         res.json({ token });
@@ -121,7 +121,7 @@ router.post('/refresh', async (req, res) => {
         }
         // Generate new token
         const newToken = jsonwebtoken_1.default.sign({ userId: user.id, role: user.role }, process.env.JWT_SECRET, {
-            expiresIn: '1d',
+            expiresIn: '3h',
         });
         // Set new cookie
         // Cookie setting removed for header-based auth

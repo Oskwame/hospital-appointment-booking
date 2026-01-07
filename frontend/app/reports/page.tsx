@@ -7,12 +7,14 @@ import { ProtectedPage } from "@/components/admin/protected-pages"
 import { useAuth } from "@/lib/auth-context"
 import { ReportsAnalytics } from "@/components/reports/reports-analytics"
 
+import { RequireAuth } from "@/components/require-auth"
+
 export default function ReportsPage() {
   const { role } = useAuth()
   const [sidebarOpen, setSidebarOpen] = useState(true)
 
   return (
-    <ProtectedPage allowedRoles={["admin", "superadmin"]} pageTitle="Reports">
+    <RequireAuth allowedRoles={["admin", "superadmin"]}>
       <div className="flex h-screen overflow-hidden bg-background">
         <Sidebar open={sidebarOpen} role={role ?? "admin"} onToggle={() => setSidebarOpen(!sidebarOpen)} />
         <div className="flex-1 flex flex-col overflow-hidden">
@@ -28,6 +30,6 @@ export default function ReportsPage() {
           </main>
         </div>
       </div>
-    </ProtectedPage>
+    </RequireAuth>
   )
 }

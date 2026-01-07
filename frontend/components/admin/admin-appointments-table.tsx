@@ -141,7 +141,7 @@ export function AdminAppointmentsTable() {
                                     <td className="px-6 py-4">
                                         <p className="text-sm text-gray-600">{apt.service}</p>
                                     </td>
-                                    <td className="px-6 py-4">
+                                    <td className="px-6 py-4 whitespace-nowrap">
                                         <p className="text-sm text-gray-900">{apt.date}</p>
                                         <p className="text-xs text-gray-500">{apt.time}</p>
                                     </td>

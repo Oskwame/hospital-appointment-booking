@@ -89,7 +89,7 @@ router.post('/login', loginLimiter, async (req, res) => {
 
     // Generate token with role
     const token = jwt.sign({ userId: user.id, role: user.role }, process.env.JWT_SECRET!, {
-      expiresIn: '1d',
+      expiresIn: '3h',
     })
 
     // Cookie setting removed for header-based auth
@@ -143,7 +143,7 @@ router.post('/refresh', async (req, res) => {
 
     // Generate new token
     const newToken = jwt.sign({ userId: user.id, role: user.role }, process.env.JWT_SECRET!, {
-      expiresIn: '1d',
+      expiresIn: '3h',
     })
 
     // Set new cookie
