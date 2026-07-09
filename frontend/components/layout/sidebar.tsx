@@ -143,7 +143,7 @@ export function Sidebar({ open: defaultOpen, role: roleProp }: SidebarProps) {
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent 
-                side="right" 
+                side="bottom" 
                 align="start"
                 className="w-48"
               >
