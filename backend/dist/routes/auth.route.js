@@ -16,15 +16,27 @@ const otpStore = new Map();
 const OTP_TTL_MS = 10 * 60 * 1000;
 // simple in-memory preferences per user
 const userPrefs = new Map();
-// simple in-memory hospital settings
-let hospitalSettings = {
+const defaultSettings = {
     hospitalName: 'Kasa Family Hospital',
     email: 'info@kasa.com',
     phone: '+1 234-567-8900',
     address: '123 Healthcare Avenue, Medical City',
     timezone: 'UTC-5',
     dataRetention: '2 years',
+    headerImages: [],
 };
+// Helper function to get or create system settings
+async function getOrCreateSettings() {
+    let settings = await prismaClient_1.default.systemSettings.findFirst({
+        where: { id: 1 },
+    });
+    if (!settings) {
+        settings = await prismaClient_1.default.systemSettings.create({
+            data: { id: 1, ...defaultSettings },
+        });
+    }
+    return settings;
+}
 // Login-specific rate limiter - stricter limits for brute-force protection
 const loginLimiter = (0, express_rate_limit_1.default)({
     windowMs: 15 * 60 * 1000, // 15 minutes
@@ -59,7 +71,7 @@ router.post('/login', loginLimiter, async (req, res) => {
             return res.status(401).json({ message: 'Invalid email or password' });
         }
         // Compare password
-        const isMatch = await bcryptjs_1.default.compare(password, user.password);
+        const isMatch = await bcryptjs_1.default.compare(password, user.password.trim());
         if (!isMatch) {
             console.warn(`[SECURITY] Failed login - Invalid password for: ${email}, IP: ${req.ip}`);
             // Log failed login attempt
@@ -182,15 +194,52 @@ router.get('/hospital', auth_1.default, async (req, res) => {
     const role = String(req.userRole || '').toUpperCase();
     if (role !== 'SUPERADMIN')
         return res.status(403).json({ message: 'Forbidden' });
-    res.json(hospitalSettings);
+    try {
+        const settings = await getOrCreateSettings();
+        res.json(settings);
+    }
+    catch (err) {
+        console.error('Failed to fetch hospital settings:', err);
+        res.status(500).json({ message: 'Server error' });
+    }
+});
+// GET /api/auth/hospital/public (Public endpoint for website homepage)
+router.get('/hospital/public', async (req, res) => {
+    try {
+        const settings = await getOrCreateSettings();
+        res.json({
+            hospitalName: settings.hospitalName,
+            email: settings.email,
+            phone: settings.phone,
+            address: settings.address,
+            headerImages: settings.headerImages || []
+        });
+    }
+    catch (err) {
+        console.error('Failed to fetch public hospital settings:', err);
+        // Fallback to default settings if DB fails
+        res.json({
+            ...defaultSettings,
+        });
+    }
 });
 router.put('/hospital', auth_1.default, async (req, res) => {
     const role = String(req.userRole || '').toUpperCase();
     if (role !== 'SUPERADMIN')
         return res.status(403).json({ message: 'Forbidden' });
-    const payload = req.body;
-    hospitalSettings = { ...hospitalSettings, ...payload };
-    res.json(hospitalSettings);
+    try {
+        const payload = req.body;
+        const updatedSettings = await prismaClient_1.default.systemSettings.upsert({
+            where: { id: 1 },
+            update: payload,
+            create: { id: 1, ...defaultSettings, ...payload },
+        });
+        res.json(updatedSettings);
+    }
+    catch (err) {
+        console.error('Failed to update hospital settings:', err);
+        res.status(500).json({ message: 'Server error' });
+    }
 });
 // POST /api/auth/users  (SUPERADMIN only)
 router.post('/users', auth_1.default, async (req, res) => {
@@ -386,7 +435,7 @@ router.put('/password', auth_1.default, async (req, res) => {
         const user = await prismaClient_1.default.user.findUnique({ where: { id: req.userId } });
         if (!user)
             return res.status(404).json({ message: 'Not found' });
-        const ok = await bcryptjs_1.default.compare(currentPassword, user.password);
+        const ok = await bcryptjs_1.default.compare(currentPassword, user.password.trim());
         if (!ok)
             return res.status(401).json({ message: 'Invalid current password' });
         const hashed = await bcryptjs_1.default.hash(newPassword, 10);

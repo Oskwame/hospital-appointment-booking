@@ -47,6 +47,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       })
 
       if (!res.ok) {
+        localStorage.removeItem("token")
         setState({ user: null, role: null, loading: false })
         return false
       }
@@ -103,7 +104,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [])
 
   useEffect(() => {
-    fetchMe()
+    const id = window.setTimeout(() => {
+      void fetchMe()
+    }, 0)
+
+    return () => window.clearTimeout(id)
   }, [fetchMe])
 
   useEffect(() => {
@@ -127,6 +132,5 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 export function useAuth() {
   return useContext(AuthContext)
 }
-
 
 

@@ -1,6 +1,4 @@
-"use client"
-
-import type React from "react"
+"use client";
 
 import { useEffect, useState } from "react"
 import { Card } from "@/components/ui/card"

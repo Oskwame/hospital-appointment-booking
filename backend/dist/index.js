@@ -15,6 +15,7 @@ const doctors_route_1 = __importDefault(require("./routes/doctors.route"));
 const appointments_route_1 = __importDefault(require("./routes/appointments.route"));
 const reports_route_1 = __importDefault(require("./routes/reports.route"));
 const upload_route_1 = __importDefault(require("./routes/upload.route"));
+const team_members_route_1 = __importDefault(require("./routes/team-members.route"));
 dotenv_1.default.config();
 const app = (0, express_1.default)();
 // ---------------------------
@@ -69,6 +70,7 @@ app.use("/api/doctors", doctors_route_1.default);
 app.use("/api/appointments", appointments_route_1.default);
 app.use("/api/reports", reports_route_1.default);
 app.use("/api/upload", upload_route_1.default);
+app.use("/api/team-members", team_members_route_1.default);
 // ---------------------------
 // Start Server
 // ---------------------------

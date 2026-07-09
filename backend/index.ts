@@ -11,6 +11,7 @@ import doctorsRoutes from "./routes/doctors.route";
 import appointmentsRoutes from "./routes/appointments.route";
 import reportsRoutes from "./routes/reports.route";
 import uploadRoutes from "./routes/upload.route";
+import teamMembersRoutes from "./routes/team-members.route";
 
 dotenv.config();
 const app = express();
@@ -72,6 +73,7 @@ app.use("/api/doctors", doctorsRoutes);
 app.use("/api/appointments", appointmentsRoutes);
 app.use("/api/reports", reportsRoutes);
 app.use("/api/upload", uploadRoutes);
+app.use("/api/team-members", teamMembersRoutes);
 
 // ---------------------------
 // Start Server

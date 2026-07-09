@@ -1,0 +1,11 @@
+{
+  "hospitalName": "Kasa Family Hospital",
+  "email": "info@kasa.com",
+  "phone": "+1 234-567-8900",
+  "address": "123 Healthcare Avenue, Medical City",
+  "timezone": "UTC-5",
+  "dataRetention": "2 years",
+  "headerImages": [
+    "https://res.cloudinary.com/dnrygejqn/image/upload/v1783340053/hospital_blog_images/j6e6fu6lxc8rj3dqi4uh.jpg"
+  ]
+}

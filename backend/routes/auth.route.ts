@@ -1,5 +1,7 @@
 //routes/auth.route.ts
 import express from 'express'
+import fs from 'fs'
+import path from 'path'
 import prisma from '../prisma/prismaClient'
 import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
@@ -15,21 +17,40 @@ const OTP_TTL_MS = 10 * 60 * 1000
 
 // simple in-memory preferences per user
 const userPrefs = new Map<number, { autoApproval: boolean; emailNotifications: boolean }>()
-// simple in-memory hospital settings
-let hospitalSettings: {
+
+interface HospitalSettings {
   hospitalName: string
   email: string
   phone: string
   address: string
   timezone: string
   dataRetention: string
-} = {
+  headerImages: string[]
+}
+
+const defaultSettings: HospitalSettings = {
   hospitalName: 'Kasa Family Hospital',
   email: 'info@kasa.com',
   phone: '+1 234-567-8900',
   address: '123 Healthcare Avenue, Medical City',
   timezone: 'UTC-5',
   dataRetention: '2 years',
+  headerImages: [],
+}
+
+// Helper function to get or create system settings
+async function getOrCreateSettings() {
+  let settings = await prisma.systemSettings.findFirst({
+    where: { id: 1 },
+  })
+
+  if (!settings) {
+    settings = await prisma.systemSettings.create({
+      data: { id: 1, ...defaultSettings },
+    })
+  }
+
+  return settings
 }
 
 
@@ -71,7 +92,7 @@ router.post('/login', loginLimiter, async (req, res) => {
     }
 
     // Compare password
-    const isMatch = await bcrypt.compare(password, user.password)
+    const isMatch = await bcrypt.compare(password, user.password.trim())
     if (!isMatch) {
       console.warn(`[SECURITY] Failed login - Invalid password for: ${email}, IP: ${req.ip}`)
       // Log failed login attempt
@@ -207,15 +228,52 @@ router.put('/preferences', auth, async (req, res) => {
 router.get('/hospital', auth, async (req, res) => {
   const role = String((req as any).userRole || '').toUpperCase()
   if (role !== 'SUPERADMIN') return res.status(403).json({ message: 'Forbidden' })
-  res.json(hospitalSettings)
+  
+  try {
+    const settings = await getOrCreateSettings()
+    res.json(settings)
+  } catch (err) {
+    console.error('Failed to fetch hospital settings:', err)
+    res.status(500).json({ message: 'Server error' })
+  }
+})
+
+// GET /api/auth/hospital/public (Public endpoint for website homepage)
+router.get('/hospital/public', async (req, res) => {
+  try {
+    const settings = await getOrCreateSettings()
+    res.json({
+      hospitalName: settings.hospitalName,
+      email: settings.email,
+      phone: settings.phone,
+      address: settings.address,
+      headerImages: settings.headerImages || []
+    })
+  } catch (err) {
+    console.error('Failed to fetch public hospital settings:', err)
+    // Fallback to default settings if DB fails
+    res.json({
+      ...defaultSettings,
+    })
+  }
 })
 
 router.put('/hospital', auth, async (req, res) => {
   const role = String((req as any).userRole || '').toUpperCase()
   if (role !== 'SUPERADMIN') return res.status(403).json({ message: 'Forbidden' })
-  const payload = req.body as Partial<typeof hospitalSettings>
-  hospitalSettings = { ...hospitalSettings, ...payload }
-  res.json(hospitalSettings)
+  
+  try {
+    const payload = req.body as Partial<HospitalSettings>
+    const updatedSettings = await prisma.systemSettings.upsert({
+      where: { id: 1 },
+      update: payload,
+      create: { id: 1, ...defaultSettings, ...payload },
+    })
+    res.json(updatedSettings)
+  } catch (err) {
+    console.error('Failed to update hospital settings:', err)
+    res.status(500).json({ message: 'Server error' })
+  }
 })
 
 // POST /api/auth/users  (SUPERADMIN only)
@@ -429,7 +487,7 @@ router.put('/password', auth, async (req, res) => {
     }
     const user = await prisma.user.findUnique({ where: { id: (req as any).userId } })
     if (!user) return res.status(404).json({ message: 'Not found' })
-    const ok = await bcrypt.compare(currentPassword, user.password)
+    const ok = await bcrypt.compare(currentPassword, user.password.trim())
     if (!ok) return res.status(401).json({ message: 'Invalid current password' })
     const hashed = await bcrypt.hash(newPassword, 10)
     await prisma.user.update({ where: { id: user.id }, data: { password: hashed } })

@@ -8,13 +8,20 @@ import {
   FileText,
   Stethoscope,
   X,
-  ChevronLeft,
   ChevronRight,
   PenSquare,
+  Globe,
 } from "lucide-react"
 import Image from "next/image"
 import { useState } from "react"
 import { useAuth } from "@/lib/auth-context"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 
 interface SidebarProps {
   open: boolean
@@ -35,11 +42,15 @@ export function Sidebar({ open: defaultOpen, role: roleProp }: SidebarProps) {
     { icon: Calendar, label: "Appointments", href: "/appointments" },
     { icon: Users, label: "Doctors", href: "/doctors" },
     { icon: Stethoscope, label: "Services", href: "/services" },
-    { icon: PenSquare, label: "Blog", href: "/admin/blog" },
     { icon: FileText, label: "Reports", href: "/reports" },
   ]
   const doctorItems = [{ icon: Calendar, label: "Appointments", href: "/appointments" }]
   const superAdminItems = [{ icon: Users, label: "User Management", href: "/users" }]
+
+  const manageWebsiteItems = [
+    { icon: PenSquare, label: "Blog", href: "/admin/blog" },
+    { icon: Users, label: "Team Members", href: "/admin/team-members" },
+  ]
 
   const r = String(role || "admin").toLowerCase()
   let items = baseItems
@@ -108,6 +119,64 @@ export function Sidebar({ open: defaultOpen, role: roleProp }: SidebarProps) {
               {(!desktopCollapsed || mobileOpen) && <span className="text-sm font-medium">{item.label}</span>}
             </a>
           ))}
+
+          {/* Manage Website Dropdown */}
+          {/* Manage Website Dropdown (Admin & Superadmin) */}
+          {(r === 'admin' || r === 'superadmin') && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  className={cn(
+                    "w-full flex items-center gap-3 px-4 py-3 rounded-md transition-all text-gray-700",
+                    "hover:bg-blue-100 hover:text-blue-700 active:scale-[0.98]",
+                    "focus:outline-none focus:ring-2 focus:ring-blue-400 shadow-sm hover:shadow-md"
+                  )}
+                  title={desktopCollapsed && !mobileOpen ? "Manage Website" : undefined}
+                >
+                  <Globe className="h-5 w-5 text-blue-600 flex-shrink-0" />
+                  {(!desktopCollapsed || mobileOpen) && (
+                    <span className="text-sm font-medium">Manage Website</span>
+                  )}
+                  {(!desktopCollapsed || mobileOpen) && (
+                    <ChevronRight className="h-4 w-4 ml-auto text-gray-400" />
+                  )}
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent 
+                side="right" 
+                align="start"
+                className="w-48"
+              >
+                {manageWebsiteItems.map((item) => (
+                  <DropdownMenuItem key={item.label} asChild>
+                    <a
+                      href={item.href}
+                      className="flex items-center gap-2 w-full cursor-pointer"
+                    >
+                      <item.icon className="h-4 w-4 text-blue-600" />
+                      <span>{item.label}</span>
+                    </a>
+                  </DropdownMenuItem>
+                ))}
+                {r === 'superadmin' && (
+                  <>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem asChild>
+                      <a
+                        href="/admin/image-uploads"
+                        className="flex items-center gap-2 w-full cursor-pointer"
+                      >
+                        <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                        </svg>
+                        <span>Image Uploads</span>
+                      </a>
+                    </DropdownMenuItem>
+                  </>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
         </nav>
       </aside>
 

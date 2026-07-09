@@ -12,7 +12,7 @@ const nextConfig = {
           },
           {
             key: 'Access-Control-Allow-Origin',
-            value: 'https://kfhappointment.up.railway.app',
+            value: process.env.NEXT_PUBLIC_API_BASE_URL || 'https://kfhappointment.up.railway.app',
           },
           {
             key: 'Access-Control-Allow-Methods',

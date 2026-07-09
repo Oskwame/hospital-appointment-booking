@@ -101,6 +101,21 @@ model Doctor {
   @@map("doctors")
 }
 
+model TeamMember {
+  id        Int       @id @default(autoincrement())
+  name      String
+  title     String
+  imageSrc  String    @map("image_src")
+  specialty String?
+  email     String?
+  phone     String?
+  category  String    @default("leadership") // leadership, doctors, staff, etc.
+  order     Int       @default(0)
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  @@map("team_members")
+}
+
 model AuditLog {
   id        Int      @id @default(autoincrement())
   userId    Int?     @map("user_id")
@@ -119,3 +134,17 @@ model AuditLog {
   @@index([action])
   @@index([createdAt])
 }
+
+model SystemSettings {
+  id            Int      @id @default(1)
+  hospitalName  String   @default("Kasa Family Hospital")
+  email         String   @default("info@kasa.com")
+  phone         String   @default("+1 234-567-8900")
+  address       String   @default("123 Healthcare Avenue, Medical City")
+  timezone      String   @default("UTC-5")
+  dataRetention String   @default("2 years")
+  headerImages  String[] @default([])
+
+  @@map("system_settings")
+}
+

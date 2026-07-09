@@ -1,0 +1,23 @@
+{
+  "$schema": "https://railway.app/railway.schema.json",
+  "services": {
+    "backend": {
+      "rootDirectory": "backend",
+      "buildCommand": "npm install && npx prisma generate && npm run build",
+      "startCommand": "node dist/index.js",
+      "healthcheckPath": "/",
+      "healthcheckTimeout": 300,
+      "restartPolicyType": "on_failure",
+      "restartPolicyMaxRetries": 3
+    },
+    "frontend": {
+      "rootDirectory": "frontend",
+      "buildCommand": "npm install && npm run build",
+      "startCommand": "npm start",
+      "healthcheckPath": "/",
+      "healthcheckTimeout": 300,
+      "restartPolicyType": "on_failure",
+      "restartPolicyMaxRetries": 3
+    }
+  }
+}

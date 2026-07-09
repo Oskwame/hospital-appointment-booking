@@ -1,1 +1,1 @@
-web: npx prisma generate && node dist/index.js
+web: npx prisma generate && npx tsc && node dist/index.js
