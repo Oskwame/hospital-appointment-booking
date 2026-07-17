@@ -11,6 +11,7 @@ import {
   ChevronRight,
   PenSquare,
   Globe,
+  Briefcase,
 } from "lucide-react"
 import Image from "next/image"
 import { useState } from "react"
@@ -50,6 +51,7 @@ export function Sidebar({ open: defaultOpen, role: roleProp }: SidebarProps) {
   const manageWebsiteItems = [
     { icon: PenSquare, label: "Blog", href: "/admin/blog" },
     { icon: Users, label: "Team Members", href: "/admin/team-members" },
+    { icon: Briefcase, label: "Manage Career", href: "/admin/manage-career" },
   ]
 
   const r = String(role || "admin").toLowerCase()

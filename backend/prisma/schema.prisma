@@ -116,6 +116,44 @@ model TeamMember {
   @@map("team_members")
 }
 
+model Career {
+  id           Int      @id @default(autoincrement())
+  title        String
+  department   String
+  location     String
+  type         String   @default("Full-time")
+  description  String
+  requirements String
+  salary       String?
+  status       String   @default("active")
+  createdAt    DateTime @default(now()) @map("created_at")
+  applications Application[]
+
+  @@map("careers")
+}
+
+model Application {
+  id            Int      @id @default(autoincrement())
+  careerId      Int      @map("career_id")
+  firstName     String   @map("first_name")
+  lastName      String   @map("last_name")
+  email         String
+  phone         String
+  address       String?
+  education     String?
+  experience    String?
+  licenses      String?
+  cvFileName    String?  @map("cv_file_name")
+  coverLetterFileName String? @map("cover_letter_file_name")
+  certificatesFileName String? @map("certificates_file_name")
+  status        String   @default("pending")
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  career        Career   @relation(fields: [careerId], references: [id], onDelete: Cascade)
+
+  @@map("applications")
+}
+
 model AuditLog {
   id        Int      @id @default(autoincrement())
   userId    Int?     @map("user_id")
