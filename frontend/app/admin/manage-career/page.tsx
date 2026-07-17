@@ -16,10 +16,10 @@ export default function ManageCareerPage() {
                 <div className="flex-1 flex flex-col overflow-hidden">
                     <TopBar onMenuClick={() => setSidebarOpen(!sidebarOpen)} />
                     <main className="flex-1 overflow-auto">
-                        <div className="p-6 max-w-7xl mx-auto space-y-6">
+                        <div className="p-4 sm:p-6 max-w-7xl mx-auto space-y-6">
                             <div>
-                                <h2 className="text-3xl font-bold text-foreground">Manage Career</h2>
-                                <p className="text-muted-foreground mt-1">Create and manage job openings and career opportunities at the hospital.</p>
+                                <h2 className="text-2xl sm:text-3xl font-bold text-foreground">Manage Career</h2>
+                                <p className="text-muted-foreground mt-1 text-sm sm:text-base">Create and manage job openings and career opportunities at the hospital.</p>
                             </div>
                             <ManageCareerManager />
                         </div>

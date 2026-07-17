@@ -138,7 +138,7 @@ export default function CareerApplicationsPage() {
                 <div className="flex-1 flex flex-col overflow-hidden">
                     <TopBar onMenuClick={() => setSidebarOpen(!sidebarOpen)} />
                     <main className="flex-1 overflow-auto">
-                        <div className="p-6 max-w-7xl mx-auto space-y-6">
+                        <div className="p-4 sm:p-6 max-w-7xl mx-auto space-y-6">
                             {/* Header */}
                             <div className="flex items-center gap-4">
                                 <Button
@@ -153,17 +153,17 @@ export default function CareerApplicationsPage() {
                             </div>
 
                             {loading ? (
-                                <Card className="p-12 text-center border-dashed">
+                                <Card className="p-8 sm:p-12 text-center border-dashed">
                                     <p className="text-muted-foreground">Loading applications...</p>
                                 </Card>
                             ) : !career ? (
-                                <Card className="p-12 text-center border-dashed">
+                                <Card className="p-8 sm:p-12 text-center border-dashed">
                                     <p className="text-muted-foreground">Career listing not found.</p>
                                 </Card>
                             ) : (
                                 <>
                                     {/* Career Summary */}
-                                    <Card className="p-6">
+                                    <Card className="p-4 sm:p-6">
                                         <div className="flex flex-wrap items-start justify-between gap-4">
                                             <div>
                                                 <div className="flex items-center gap-3 mb-2">
@@ -177,7 +177,7 @@ export default function CareerApplicationsPage() {
                                                         {applications.length} application{applications.length !== 1 ? "s" : ""}
                                                     </span>
                                                 </div>
-                                                <h2 className="text-2xl font-bold text-gray-900">{career.title}</h2>
+                                                <h2 className="text-xl sm:text-2xl font-bold text-gray-900">{career.title}</h2>
                                             </div>
                                             <div className="flex flex-wrap gap-3 text-sm text-gray-600">
                                                 <div className="flex items-center gap-1.5"><MapPin className="h-4 w-4" />{career.location}</div>
@@ -189,30 +189,30 @@ export default function CareerApplicationsPage() {
 
                                     {/* Applications List */}
                                     {applications.length === 0 ? (
-                                        <Card className="p-12 text-center border-dashed">
+                                        <Card className="p-8 sm:p-12 text-center border-dashed">
                                             <User className="h-12 w-12 text-gray-300 mx-auto mb-3" />
                                             <p className="text-muted-foreground">No applications received yet.</p>
                                         </Card>
                                     ) : (
                                         <div className="space-y-4">
                                             {applications.map((app) => (
-                                                <Card key={app.id} className="p-6 hover:shadow-md transition-shadow">
+                                                <Card key={app.id} className="p-4 sm:p-6 hover:shadow-md transition-shadow">
                                                     {/* Applicant Header */}
                                                     <div className="flex flex-wrap items-start justify-between gap-4 mb-4">
                                                         <div className="flex items-center gap-3">
-                                                            <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-lg">
+                                                            <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-lg flex-shrink-0">
                                                                 {app.firstName.charAt(0)}
                                                             </div>
                                                             <div>
-                                                                <h3 className="font-bold text-lg text-gray-900">
+                                                                <h3 className="font-bold text-base sm:text-lg text-gray-900">
                                                                     {app.firstName} {app.lastName}
                                                                 </h3>
-                                                                <p className="text-sm text-gray-500">
+                                                                <p className="text-xs sm:text-sm text-gray-500">
                                                                     Applied {new Date(app.createdAt).toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" })}
                                                                 </p>
                                                             </div>
                                                         </div>
-                                                        <div className="flex items-center gap-2">
+                                                        <div className="flex items-center gap-2 ml-auto">
                                                             <span className={`px-3 py-1 text-xs font-semibold rounded-full ${statusColors[app.status] || "bg-gray-100 text-gray-600"}`}>
                                                                 {app.status}
                                                             </span>

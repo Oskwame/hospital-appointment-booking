@@ -136,20 +136,21 @@ export function ManageCareerManager() {
 
     return (
         <div className="space-y-6">
-            <div className="flex justify-between items-center">
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
                 <h3 className="text-xl font-semibold text-foreground">All Career Listings</h3>
-                <Button onClick={openCreate} className="gap-2 shadow-md bg-blue-100 h-11 border-gray-400 text-blue-700 hover:bg-blue-200">
+                <Button onClick={openCreate} className="gap-2 shadow-md bg-blue-100 h-11 border-gray-400 text-blue-700 hover:bg-blue-200 self-start sm:self-auto">
                     <Plus className="h-5 w-5" />
-                    Add Career
+                    <span className="hidden sm:inline">Add Career</span>
+                    <span className="sm:hidden">Add</span>
                 </Button>
             </div>
 
             {loading ? (
-                <Card className="p-12 text-center border-dashed">
+                <Card className="p-8 sm:p-12 text-center border-dashed">
                     <p className="text-muted-foreground">Loading career listings...</p>
                 </Card>
             ) : careers.length === 0 ? (
-                <Card className="p-12 text-center border-dashed">
+                <Card className="p-8 sm:p-12 text-center border-dashed">
                     <p className="text-muted-foreground">No career listings found.</p>
                 </Card>
             ) : (
@@ -188,8 +189,8 @@ export function ManageCareerManager() {
                                 </div>
                                 <p className="text-sm text-gray-500 mb-4 line-clamp-2 flex-1">{career.description}</p>
 
-                                <div className="flex justify-between items-center pt-4 border-t border-gray-100 mt-auto">
-                                    <div className="flex gap-2">
+                                <div className="flex flex-wrap justify-between items-center gap-2 pt-4 border-t border-gray-100 mt-auto">
+                                    <div className="flex flex-wrap gap-2">
                                         <Button
                                             size="sm"
                                             variant="outline"
@@ -248,9 +249,9 @@ export function ManageCareerManager() {
 
             {/* CREATE/EDIT DIALOG */}
             <Dialog open={showForm} onOpenChange={(open) => !open && resetForm()}>
-                <DialogContent className="!max-w-2xl !max-h-[90vh] !overflow-y-auto !bg-white !border-blue-200 !border-2 !rounded-2xl !shadow-lg !p-8">
+                <DialogContent className="!max-w-2xl !max-h-[90vh] !overflow-y-auto !bg-white !border-blue-200 !border-2 !rounded-2xl !shadow-lg !p-4 sm:!p-8 !w-[calc(100%-2rem)]">
                     <DialogHeader className="!mb-4">
-                        <DialogTitle className="!text-xl !font-semibold !text-slate-800 !tracking-tight">
+                        <DialogTitle className="!text-lg sm:!text-xl !font-semibold !text-slate-800 !tracking-tight">
                             {editingCareer ? "Edit Career Listing" : "Create New Career Listing"}
                         </DialogTitle>
                     </DialogHeader>
@@ -264,7 +265,7 @@ export function ManageCareerManager() {
                                 className="mt-1"
                             />
                         </div>
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div>
                                 <Label className="text-sm font-medium text-gray-700">Department</Label>
                                 <Input
@@ -284,7 +285,7 @@ export function ManageCareerManager() {
                                 />
                             </div>
                         </div>
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div>
                                 <Label className="text-sm font-medium text-gray-700">Job Type</Label>
                                 <select
@@ -341,8 +342,8 @@ export function ManageCareerManager() {
                         </div>
                     </div>
                     <DialogFooter className="!mt-6">
-                        <Button variant="outline" onClick={resetForm}>Cancel</Button>
-                        <Button onClick={handleSave} className="bg-blue-600 text-white hover:bg-blue-700">
+                        <Button variant="outline" onClick={resetForm} className="w-full sm:w-auto">Cancel</Button>
+                        <Button onClick={handleSave} className="bg-blue-600 text-white hover:bg-blue-700 w-full sm:w-auto">
                             {editingCareer ? "Update" : "Create"}
                         </Button>
                     </DialogFooter>
@@ -351,21 +352,21 @@ export function ManageCareerManager() {
 
             {/* PREVIEW DIALOG */}
             <Dialog open={!!previewCareer} onOpenChange={(open) => !open && setPreviewCareer(null)}>
-                <DialogContent className="!max-w-2xl !max-h-[90vh] !overflow-y-auto !bg-white !border-blue-200 !border-2 !rounded-2xl !shadow-lg !p-8">
+                <DialogContent className="!max-w-2xl !max-h-[90vh] !overflow-y-auto !bg-white !border-blue-200 !border-2 !rounded-2xl !shadow-lg !p-4 sm:!p-8 !w-[calc(100%-2rem)]">
                     {previewCareer && (
                         <div className="space-y-6">
                             <div>
-                                <div className="flex items-center gap-3 mb-2">
-                                    <span className="px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
+                                <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-2">
+                                    <span className="px-3 py-1 rounded-full text-xs sm:text-sm font-medium bg-blue-100 text-blue-800">
                                         {previewCareer.department}
                                     </span>
                                     <span className={`px-2 py-0.5 text-xs rounded-full ${previewCareer.status === "active" ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-500"}`}>
                                         {previewCareer.status}
                                     </span>
                                 </div>
-                                <h2 className="text-2xl font-bold text-gray-900">{previewCareer.title}</h2>
+                                <h2 className="text-xl sm:text-2xl font-bold text-gray-900">{previewCareer.title}</h2>
                             </div>
-                            <div className="flex flex-wrap gap-4 text-sm text-gray-600">
+                            <div className="flex flex-wrap gap-3 sm:gap-4 text-sm text-gray-600">
                                 <div className="flex items-center gap-1.5"><MapPin className="h-4 w-4" />{previewCareer.location}</div>
                                 <div className="flex items-center gap-1.5"><Clock className="h-4 w-4" />{previewCareer.type}</div>
                                 {previewCareer.salary && <div className="flex items-center gap-1.5"><DollarSign className="h-4 w-4" />{previewCareer.salary}</div>}
